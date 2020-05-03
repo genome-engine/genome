@@ -47,11 +47,18 @@ func (a *DefaultScenarioAnalyzer) Analyze() error {
 func (a *DefaultScenarioAnalyzer) sequenceCheck() error {
 	var last s.StepName
 	var errorText strings.Builder
+	var parsingWas bool
 
 	errorText.WriteString("Scenario step sequence error:\n\t")
 
 	for i, current := range a.Steps {
 		if i > 0 {
+			if current.StepName == s.Parsing {
+				parsingWas = true
+			}
+			if !parsingWas && current.StepName == s.Generating {
+				return errors.New("The generation stage cannot go before the parsing stage. ")
+			}
 			if stepExist(last, current.StepName) {
 				last = current.StepName
 				continue
@@ -68,6 +75,11 @@ func (a *DefaultScenarioAnalyzer) sequenceCheck() error {
 
 			return errors.New(errorText.String())
 		}
+
+		if current.StepName == s.Generating {
+			return errors.New("Generating step can't be the first in a scenario ")
+		}
+
 		last = current.StepName
 	}
 
