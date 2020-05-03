@@ -13,8 +13,8 @@ type Scenario struct {
 	iface.Analyzer
 }
 
-func New(chain []Step, analyzer iface.Analyzer) (*Scenario, error) {
-	return &Scenario{chain, analyzer}, nil
+func New(chain []Step, analyzer iface.Analyzer) *Scenario {
+	return &Scenario{chain, analyzer}
 }
 
 func (s *Scenario) Add(name StepName, exec iface.Executable) error {
