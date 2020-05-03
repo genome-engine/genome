@@ -1,8 +1,7 @@
 package interfaces
 
 //The Analyzer interface is used to analyze the scenario correctness.
-//The Analyze method will always be executed when creating a script,
-//i.e. when scenario.New() is created.
+//The Analyze method will always be executed when you call scenario.Execute
 type Analyzer interface {
 	Analyze() error
 }

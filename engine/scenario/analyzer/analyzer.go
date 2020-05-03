@@ -3,6 +3,7 @@ package analyzer
 import (
 	"errors"
 	s "github.com/genome-engine/genome/engine/scenario"
+	"github.com/genome-engine/genome/helpers/errors_merger"
 	"strings"
 )
 
@@ -33,26 +34,13 @@ func (a *DefaultScenarioAnalyzer) Analyze() error {
 		errs[sequenceCheck] = err
 	}
 
-	errsResult := mergeErrors(errs)
+	errsResult := errors_merger.MergeMapErrors(errs)
 
 	if errsResult != "" {
 		return errors.New(errsResult)
 	}
 
 	return nil
-}
-
-//aggregates the error text into a single string
-func mergeErrors(errs map[string]error) string {
-	var errText strings.Builder
-
-	for phase, err := range errs {
-		errText.WriteString(phase)
-		errText.WriteString(":\n\t")
-		errText.WriteString(err.Error())
-	}
-
-	return errText.String()
 }
 
 //checks for compliance with step sequence rules prescribed in the defaultSequenceOfSteps method
