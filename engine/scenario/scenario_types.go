@@ -1,16 +1,26 @@
 package scenario
 
-type Type int
+import iface "github.com/genome-engine/genome/engine/scenario/interfaces"
 
+type Step struct {
+	StepName
+	iface.Executable
+}
+
+//type is used to name the scenario steps
+type StepName int
+
+//possible steps
 const (
-	Unknown Type = iota
+	Unknown StepName = iota
 	Command
 	Parsing
 	Generating
 )
 
-func (t *Type) String() string {
-	mapping := map[Type]string{
+//if not on the list, it will return "Unknown"
+func (t *StepName) String() string {
+	mapping := map[StepName]string{
 		Unknown:    "Unknown",
 		Command:    "Command",
 		Parsing:    "Parsing",
