@@ -68,15 +68,15 @@ func (f *Formatter) ToCollection(collectionString string) c.Collector {
 func (Formatter) ObjMapToText(objectMap map[units.Unit][]units.Unit) string {
 	var text strings.Builder
 
-	for unit, units := range objectMap {
-		text.WriteString("id:" + strconv.FormatInt(int64(unit.GetId()), 10))
-		text.WriteString(" name:" + unit.GetName())
-		text.WriteString(" selector:" + unit.GetSelector().Name() + "\n")
+	for root, children := range objectMap {
+		text.WriteString("id:" + strconv.FormatInt(int64(root.GetId()), 10))
+		text.WriteString(" name:" + root.GetName())
+		text.WriteString(" selector:" + root.GetSelector().Name() + "\n")
 
-		for _, u := range units {
-			text.WriteString("\tid:" + strconv.FormatInt(int64(u.GetId()), 10))
-			text.WriteString(" name:" + u.GetName())
-			text.WriteString(" selector:" + u.GetSelector().Name() + "\n")
+		for _, child := range children {
+			text.WriteString("\tid:" + strconv.FormatInt(int64(child.GetId()), 10))
+			text.WriteString(" name:" + child.GetName())
+			text.WriteString(" selector:" + child.GetSelector().Name() + "\n")
 		}
 	}
 
