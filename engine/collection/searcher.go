@@ -6,20 +6,16 @@ import (
 )
 
 //This function allows you to find units with specific selectors. It is searched at both root and child levels.
-func (c *Collection) SearchBySelectors(selectors ...units.Selector) (u []units.Unit) {
-	//It's important. ObjectMap is accessed only through the GetObjectMap function,
+func (c *Collection) Search(selectors ...units.Selector) (u []units.Unit) {
+	if len(selectors) == 0 {
+		selectors = units.AllSelectors
+	}
+	//It's important. UnitsMap is accessed only through the UnitsMap function,
 	//because it is at the time of its call that root->children are linked.
-	for root, childes := range c.GetObjectMap() {
-		//root level
+	for _, root := range c.rootTable {
 		if SelectorExist(selectors, root.GetSelector()) && !UnitExist(u, root) {
 			u = append(u, root)
 			continue
-		}
-
-		for _, child := range childes {
-			if SelectorExist(selectors, child.GetSelector()) && !UnitExist(u, child) {
-				u = append(u, child)
-			}
 		}
 	}
 
@@ -28,9 +24,9 @@ func (c *Collection) SearchBySelectors(selectors ...units.Selector) (u []units.U
 
 //This function allows you to find units with specific id. It is searched at both root and child levels.
 func (c *Collection) SearchById(id int) units.Unit {
-	//It's important. ObjectMap is accessed only through the GetObjectMap function,
+	//It's important. UnitsMap is accessed only through the UnitsMap function,
 	//because it is at the time of its call that root->children are linked.
-	for root, children := range c.GetObjectMap() {
+	for root, children := range c.UnitsMap() {
 		//root level
 		if root.GetId() == id {
 			return root

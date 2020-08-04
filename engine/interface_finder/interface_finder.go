@@ -20,7 +20,7 @@ const Filename = "interfaces"
 type DefaultInterfaceFinder struct {
 	collection.Collector
 	locations       map[string]string
-	preservingPaths map[string]collection.ObjectMap
+	preservingPaths map[string]collection.UnitsMap
 	savePath        string
 }
 
@@ -29,7 +29,7 @@ func New(savePath string, locations map[string]string, collector collection.Coll
 		savePath:        savePath,
 		locations:       locations,
 		Collector:       collector,
-		preservingPaths: map[string]collection.ObjectMap{},
+		preservingPaths: map[string]collection.UnitsMap{},
 	}
 }
 
@@ -41,7 +41,7 @@ func (finder *DefaultInterfaceFinder) Start() error {
 		}
 
 		lockName = path.Join(finder.savePath, lockName, Filename+formatter.FileExtension)
-		finder.preservingPaths[lockName] = finder.GetObjectMap()
+		finder.preservingPaths[lockName] = finder.UnitsMap()
 		finder.Clear()
 	}
 
@@ -65,7 +65,6 @@ func (finder *DefaultInterfaceFinder) SaveResult() error {
 
 	return nil
 }
-
 func (finder *DefaultInterfaceFinder) walkFunc() filepath.WalkFunc {
 	var (
 		isGoFile     = func(path string) bool { return strings.HasSuffix(path, ".go") }
@@ -91,7 +90,7 @@ func (finder *DefaultInterfaceFinder) walkFunc() filepath.WalkFunc {
 			set     = token.NewFileSet()
 			visitor = visitors.NewGeneralVisitor(
 				path, packMainDir, string(src),
-				collection.New(collection.WithoutChildless),
+				collection.New(),
 				visitors.Interfaces,
 			)
 		)
@@ -106,12 +105,12 @@ func (finder *DefaultInterfaceFinder) walkFunc() filepath.WalkFunc {
 		ast.Walk(visitor, f)
 
 		// if no selectors of interest were found in the file.txt, proceed to the next file.txt.
-		if len(visitor.Collection.SearchBySelectors(units.GoInterface)) == 0 {
+		if len(visitor.Collection.Search(units.GoInterface)) == 0 {
 			return nil
 		}
 
 		// transfer of units collected by visitor to interface_finder
-		if err := finder.Collector.JoinCollection(visitor.Collection); err != nil {
+		if err := finder.Collector.Merge(visitor.Collection); err != nil {
 			return err
 		}
 

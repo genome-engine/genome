@@ -8,15 +8,43 @@ import (
 type VisitMode int
 
 const (
-	Imports VisitMode = iota
+	All VisitMode = iota
+	Imports
 	Interfaces
 	Functions
 	Customs
 	Structs
-	ValueDecls
+	Values
 )
 
-var AllModes = []VisitMode{Imports, Interfaces, Functions, Customs, Structs, ValueDecls}
+var modes = map[VisitMode]string{
+	All:        "all",
+	Imports:    "imports",
+	Interfaces: "ifaces",
+	Functions:  "funcs",
+	Customs:    "customs",
+	Structs:    "structs",
+	Values:     "values",
+}
+
+func (m VisitMode) String() string {
+	mode, ok := modes[m]
+	if ok {
+		return mode
+	}
+	return ""
+}
+
+func ToMode(s string) VisitMode {
+	for mode, name := range modes {
+		if name == s {
+			return mode
+		}
+	}
+	return Values
+}
+
+var AllModes = []VisitMode{Imports, Interfaces, Functions, Customs, Structs, Values}
 
 func modeExist(modes []VisitMode, mode VisitMode) bool {
 	for _, m := range modes {

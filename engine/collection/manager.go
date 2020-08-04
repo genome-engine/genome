@@ -2,11 +2,12 @@ package collection
 
 import (
 	"fmt"
+	"github.com/genome-engine/genome/engine/types"
 	"github.com/genome-engine/genome/engine/units"
 )
 
 func (c *Collection) Clear() {
-	c.objectMap = map[units.Unit][]units.Unit{}
+	c.unitsMap = map[units.Unit][]units.Unit{}
 }
 
 func (c *Collection) Add(root units.Unit, children ...units.Unit) error {
@@ -35,43 +36,38 @@ func (c *Collection) Add(root units.Unit, children ...units.Unit) error {
 			c.childrenTable[key] = append(c.childrenTable[key], child)
 		}
 
-		if _, ok := c.rootTable[child.GetId()]; !ok && c.mode == WithChildless {
-			c.rootTable[child.GetId()] = child
-		}
+		c.rootTable[child.GetId()] = child
 	}
 
 	return nil
 }
 
-func (c *Collection) GetObjectMap() map[units.Unit][]units.Unit {
+func (c *Collection) UnitsMap() map[units.Unit][]units.Unit {
 	c.Clear()
 
 	for id, unit := range c.rootTable {
 		if child, ok := c.childrenTable[id]; ok {
-			c.objectMap[unit] = append(c.objectMap[unit], child...)
+			c.unitsMap[unit] = append(c.unitsMap[unit], child...)
 			continue
 		}
 
-		if c.mode == WithChildless {
-			c.objectMap[unit] = nil
-		}
+		c.unitsMap[unit] = nil
 	}
 
-	return c.objectMap
+	return c.unitsMap
 }
 
-func (c *Collection) JoinCollection(collector Collector) error {
+func (c *Collection) Merge(collector Collector) error {
 	if collector == nil {
-		return fmt.Errorf("You handed over an empty collection ")
+		return nil
 	}
 
-	for root, children := range collector.GetObjectMap() {
+	for root, children := range collector.UnitsMap() {
 		err := c.Add(root, children...)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -80,9 +76,9 @@ func (c *Collection) Print(selectors ...units.Selector) {
 		selectors = units.AllSelectors
 	}
 
-	for root, children := range c.GetObjectMap() {
+	for root, children := range c.UnitsMap() {
 		if SelectorExist(selectors, root.GetSelector()) {
-			fmt.Printf("%v{Id: %v, Name: %v,Type: %v, TypeDescriptor:%v}\n",
+			fmt.Printf("%v{GetId: %v, Name: %v,GetType: %v, TypeDescriptor:%v}\n",
 				root.GetSelector().Name(),
 				root.GetId(),
 				root.GetName(),
@@ -93,7 +89,7 @@ func (c *Collection) Print(selectors ...units.Selector) {
 				fmt.Printf("\t- No children\n")
 			}
 			for _, child := range children {
-				fmt.Printf("\t- %v{Id: %v, Name: %v, Type: %v, TypeDescriptor:%v}\n",
+				fmt.Printf("\t- %v{GetId: %v, Name: %v, GetType: %v, TypeDescriptor:%v}\n",
 					child.GetSelector().Name(),
 					child.GetId(),
 					child.GetName(),
@@ -104,4 +100,78 @@ func (c *Collection) Print(selectors ...units.Selector) {
 			println()
 		}
 	}
+}
+
+func (c *Collection) Linking() {
+	for _, unit := range c.rootTable {
+		switch unit.GetSelector() {
+		case units.GoConst:
+			con := unit.(*units.Constant)
+			if con.Enum && con.GetType().Descriptor() == types.Custom {
+				for _, custom := range c.rootTable {
+					if custom.GetSelector() == units.GoCustom && custom.GetName() == con.GetType().Definition() {
+						var customMethods []units.Unit
+						c.childrenTable[custom.GetId()] = append(c.childrenTable[custom.GetId()], con)
+						for _, method := range c.childrenTable[custom.GetId()] {
+							if m, ok := method.(*units.Method); ok {
+								customMethods = append(customMethods, m)
+							}
+						}
+						c.childrenTable[con.GetId()] = append(c.childrenTable[con.GetId()], customMethods...)
+					}
+				}
+			}
+		}
+	}
+	c.findImplements()
+}
+
+func (c *Collection) findImplements() {
+	var ifaceMethods = map[int][]units.Unit{}
+	var ownersMetods = map[int][]units.Unit{}
+
+	for _, unit := range c.rootTable {
+		switch unit.GetSelector() {
+		case units.GoInterface:
+			for _, method := range c.childrenTable[unit.GetId()] {
+				if method.GetSelector() == units.GoMethod {
+					ifaceMethods[unit.GetId()] = append(ifaceMethods[unit.GetId()], method)
+				}
+			}
+		case units.GoStruct, units.GoCustom:
+			for _, method := range c.childrenTable[unit.GetId()] {
+				if method.GetSelector() == units.GoMethod {
+					ownersMetods[unit.GetId()] = append(ownersMetods[unit.GetId()], method)
+				}
+			}
+		}
+	}
+
+	for ifaceId, iMethods := range ifaceMethods {
+		for ownerId, oMethods := range ownersMetods {
+			if compareMethods(iMethods, oMethods) {
+				owner := c.rootTable[ownerId]
+				iface := c.rootTable[ifaceId]
+				c.childrenTable[owner.GetId()] = append(c.childrenTable[owner.GetId()], iface)
+			}
+		}
+	}
+}
+
+func compareMethods(ifaceMethods, ownerMethods []units.Unit) bool {
+	if len(ifaceMethods) > len(ownerMethods) {
+		return false
+	}
+	var (
+		necessaryMatches = len(ifaceMethods)
+		actualMatches    int
+	)
+
+	for _, ifaceMethod := range ifaceMethods {
+		if UnitExist(ownerMethods, ifaceMethod) {
+			actualMatches++
+		}
+	}
+
+	return necessaryMatches == actualMatches
 }

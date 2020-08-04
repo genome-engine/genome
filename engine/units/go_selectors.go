@@ -5,61 +5,59 @@ type GoSelector int
 //Default selectors relevant in the author's opinion
 const (
 	GoUnknown GoSelector = iota
+	GoInterface
 	GoPackage
 	GoImport
 	GoStruct
 	GoCustom
-	GoInterface
 	GoMethod
-	GoFunc
-	GoEnumSeries
 	GoConst
+	GoFunc
 	GoVar
 )
 
 //The names are used for further output to the console.
 var selectors = map[GoSelector]string{
-	GoInterface:  "Interface",
-	GoUnknown:    "Unknown",
-	GoPackage:    "Package",
-	GoStruct:     "Struct",
-	GoCustom:     "Custom", //Subtype name {{no struct}}
-	GoImport:     "Import",
-	GoEnumSeries: "EnumSeries",
-	GoConst:      "Const",
-	GoMethod:     "Method", //func(owner) name(){}
-	GoFunc:       "Func",
-	GoVar:        "Var",
+	GoInterface: "Interface",
+	GoUnknown:   "Unknown",
+	GoPackage:   "Package",
+	GoStruct:    "Struct",
+	GoCustom:    "Custom", //Subtype Name {{no struct}}
+	GoImport:    "Import",
+	GoConst:     "Const",
+	GoMethod:    "Method", //func(owner) Name(){}
+	GoFunc:      "Func",
+	GoVar:       "Var",
 }
 
 var AllSelectors = []Selector{
-	GoUnknown, GoInterface, GoFunc, GoVar, GoConst, GoPackage, GoMethod, GoCustom, GoStruct, GoImport, GoEnumSeries,
+	GoUnknown, GoInterface, GoFunc, GoVar, GoConst, GoPackage, GoMethod, GoCustom, GoStruct, GoImport,
 }
 
 var (
-	packPossibles = []GoSelector{
-		GoInterface, GoMethod, GoImport, GoStruct, GoCustom, GoFunc, GoConst, GoVar, GoEnumSeries,
+	PackChildren = []Selector{
+		GoInterface, GoMethod, GoImport, GoStruct, GoCustom, GoFunc, GoConst, GoVar,
 	}
-	methodPossibles     = []GoSelector{GoConst, GoVar, GoFunc, GoCustom}
-	funcPossibles       = []GoSelector{GoConst, GoVar, GoFunc, GoCustom}
-	structPossibles     = []GoSelector{GoStruct, GoInterface, GoMethod, GoCustom}
-	customPossibles     = []GoSelector{GoMethod, GoInterface}
-	ifacePossibles      = []GoSelector{GoMethod, GoInterface}
-	unknownPossibles    = []GoSelector{GoMethod}
-	enumSeriesPossibles = []GoSelector{GoConst}
+	MethodChildren  = []Selector{GoConst, GoVar, GoFunc, GoCustom}
+	FuncChildren    = []Selector{GoConst, GoVar, GoFunc, GoCustom}
+	StructChildren  = []Selector{GoStruct, GoInterface, GoMethod, GoCustom}
+	CustomChildren  = []Selector{GoMethod, GoInterface, GoConst}
+	IfaceChildren   = []Selector{GoMethod, GoInterface}
+	UnknownChildren = []Selector{GoMethod}
 )
 
 //The default allowable nesting boxes are shown here.
-var possibleContains = map[GoSelector][]GoSelector{
-	GoPackage: packPossibles, GoMethod: methodPossibles, GoFunc: funcPossibles, GoStruct: structPossibles,
-	GoCustom: customPossibles, GoInterface: ifacePossibles,
-	GoUnknown: unknownPossibles, GoEnumSeries: enumSeriesPossibles,
+var possibleContains = map[GoSelector][]Selector{
+	GoPackage: PackChildren, GoMethod: MethodChildren, GoFunc: FuncChildren, GoStruct: StructChildren,
+	GoCustom: CustomChildren, GoInterface: IfaceChildren,
+	GoUnknown: UnknownChildren,
+	GoConst:   {GoMethod},
 	//Can't contain anything.
-	GoConst: nil, GoImport: nil, GoVar: nil,
+	GoImport: nil, GoVar: nil,
 }
 
 //The Package method is equivalent to the String method.
-//But if the selector is not known, it will return Unknown.
+//But if the Selector is not known, it will return Unknown.
 func (s GoSelector) Name() string {
 	if typ, ok := selectors[s]; ok {
 		return typ
@@ -67,7 +65,7 @@ func (s GoSelector) Name() string {
 	return selectors[GoUnknown]
 }
 
-//Checks whether the object with the transmitted selector can be nested in the default_template object.
+//Checks whether the object with the transmitted Selector can be nested in the default_template object.
 func (s GoSelector) CanContain(selector Selector) bool {
 	possible, ok := possibleContains[s]
 	if !ok || possible == nil {
@@ -81,6 +79,41 @@ func (s GoSelector) CanContain(selector Selector) bool {
 	}
 
 	return false
+}
+
+func (s GoSelector) ChildSelectors() []Selector {
+	switch s {
+	case GoPackage:
+		return PackChildren
+	case GoMethod:
+		return MethodChildren
+	case GoStruct:
+		return StructChildren
+	case GoCustom:
+		return CustomChildren
+	case GoFunc:
+		return FuncChildren
+	case GoInterface:
+		return IfaceChildren
+	case GoUnknown:
+		return UnknownChildren
+	default:
+		return nil
+	}
+}
+
+func (s GoSelector) ParentSelectors() []Selector {
+	var parents []Selector
+
+	for selector, children := range possibleContains {
+		for _, child := range children {
+			if child == s {
+				parents = append(parents, selector)
+			}
+		}
+	}
+
+	return parents
 }
 
 func ToSelector(str string) Selector {

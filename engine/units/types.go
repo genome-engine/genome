@@ -5,26 +5,32 @@ import (
 )
 
 type (
-	Description struct {
-		selector   Selector
+	Package struct {
+		Selector   Selector
 		Comment    string
 		IsExported bool
-		name       string
-		id         int
+		Name       string
+		ID         int
 		types.Type
-	}
-	Package struct {
-		Description
-
-		IsMain bool
-		Path   string
+		Main bool
+		Path string
 	}
 	Import struct {
-		Description
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
 		Value string
 	}
 	Structure struct {
-		Description
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
 		Fields []StructField
 	}
 	StructField struct {
@@ -35,36 +41,68 @@ type (
 		Type       types.Type
 	}
 	Interface struct {
-		Description
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
 		IsStructField bool
 	}
 	Custom struct {
-		Description
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
 	}
 	Method struct {
-		Description
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
 		InInterfaceDecl     bool
 		Signature           string
 		Parameters, Returns map[string]types.Type
 		Body                string
 	}
 	Function struct {
-		Description
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
 		Signature           string
 		Parameters, Returns map[string]types.Type
 		FuncBody            string
 	}
-	EnumSeries struct {
-		Description
-	}
 	Constant struct {
-		Description
-		IsEnum bool
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
+		Enum bool
 	}
 	Variable struct {
-		Description
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
 	}
 	Unknown struct {
-		Description
+		Selector   Selector
+		Comment    string
+		IsExported bool
+		Name       string
+		ID         int
+		types.Type
 	}
 )

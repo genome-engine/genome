@@ -21,7 +21,7 @@ func NewFormatter(collector c.Collector) *Formatter {
 }
 
 func (f *Formatter) ToText() string {
-	objMap := f.GetObjectMap()
+	objMap := f.UnitsMap()
 
 	var text strings.Builder
 

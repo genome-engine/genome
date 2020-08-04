@@ -212,7 +212,6 @@ func (vis *GeneralVisitor) varsHandle(decl *ast.GenDecl) {
 func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 	if n.Lparen != token.NoPos && n.Rparen != token.NoPos {
 		var (
-			enumSeries     = units.NewEnumSeries()
 			enumSeriesName string
 			enumFound      bool
 			enumType       types.Type
@@ -233,25 +232,16 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 					start, end := constant.Values[0].Pos()-1, constant.Values[0].End()-1
 					value = vis.src[start:end]
 
-					switch strings.Contains(value, "iota") {
+					switch strings.HasSuffix(value, "iota") {
 					case true:
 						if enumFound && len(enums) > 0 {
-							enumSeries.Type = enumType
-							enumSeries.SetName(enumSeriesName)
-							enumSeries.SetId(id(enumSeriesName))
-
 							_ = vis.Collection.Add(vis.pack, enums...)
-							_ = vis.Collection.Add(vis.pack, enumSeries)
-							_ = vis.Collection.Add(enumSeries, enums...)
 
-							enumSeries = units.NewEnumSeries()
 							enums = []units.Unit{}
-							enumSeriesName = ""
 						}
 
 						enumFound = true
 						enumType = types.Init("int")
-						enumSeriesName += constName
 
 						if constant.Type != nil {
 							start, end = constant.Type.Pos()-1, constant.Type.End()-1
@@ -265,7 +255,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 						enum = units.NewConst(id(constName), constName)
 						enum.Type = enumType
 						enum.IsExported = exported(constName)
-						enum.IsEnum = true
+						enum.Enum = true
 						enums = append(enums, enum)
 
 						continue
@@ -306,7 +296,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 					enum = units.NewConst(id(constName), constName)
 					enum.Type = enumType
 					enum.IsExported = exported(constName)
-					enum.IsEnum = true
+					enum.Enum = true
 					enums = append(enums, enum)
 					continue
 				}
@@ -314,13 +304,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 		}
 
 		if len(enums) > 0 {
-			enumSeries.Type = enumType
-			enumSeries.SetName(enumSeriesName)
-			enumSeries.SetId(id(enumSeriesName))
-
 			_ = vis.Collection.Add(vis.pack, enums...)
-			_ = vis.Collection.Add(vis.pack, enumSeries)
-			_ = vis.Collection.Add(enumSeries, enums...)
 		}
 	}
 }

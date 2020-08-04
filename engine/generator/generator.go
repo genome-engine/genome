@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -39,14 +40,23 @@ func NewGenerator(infos ...GenerationInfo) *Generator {
 }
 
 const (
-	InsertToFile Mode = iota
-	WriteFile
+	CreateFile Mode = iota
+	InsertToFile
 )
+
+func ToMode(s string) Mode {
+	if m, ok := map[string]Mode{"insert": InsertToFile, "create": CreateFile}[s]; ok {
+		return m
+	}
+	return CreateFile
+}
+
+func (m Mode) String() string { return map[Mode]string{InsertToFile: "insert", CreateFile: "write"}[m] }
 
 func (g *Generator) Generate() error {
 	for _, info := range g.infos {
 		switch info.Mode {
-		case WriteFile:
+		case CreateFile:
 			file, err := os.Create(info.Path)
 			if err != nil {
 				return err
@@ -82,13 +92,16 @@ func (g *Generator) Generate() error {
 			if err != nil {
 				return err
 			}
-			return file.Close()
 
+			_ = file.Close()
+
+			return exec.Command("go", []string{"fmt", info.Path}...).Run()
 		}
 	}
 
 	return nil
 }
+
 func (l *InsertionLabel) fillBuffer(originalSource, addonSource string) error {
 	var beginIndex int
 	l.src = "\n" + addonSource + "\n"

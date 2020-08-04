@@ -21,12 +21,12 @@ func (vis *GeneralVisitor) Visit(node ast.Node) (w ast.Visitor) {
 		}
 
 		pack := units.NewPackage(packId, packName)
-		pack.IsMain = isMain
+		pack.Main = isMain
 
 		vis.pack = pack
 		_ = vis.Collection.Add(vis.pack)
 
-		if modeExist(vis.modes, ValueDecls) {
+		if modeExist(vis.modes, Values) {
 			for _, decl := range n.Decls {
 				switch genDecl := decl.(type) {
 				case *ast.GenDecl:
@@ -196,7 +196,7 @@ func (vis *InterfacesVisitor) Visit(node ast.Node) (w ast.Visitor) {
 
 				_ = vis.Collector.Add(ifaceUnit, methodUnit)
 				if vis.parent != nil {
-					//println(vis.parent.GetName())
+					//println(vis.parent.Name())
 					_ = vis.Collector.Add(vis.parent, ifaceUnit)
 				}
 			case *ast.Ident:
