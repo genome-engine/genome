@@ -77,6 +77,7 @@ type (
 		parent     units.Unit //Transmitted only when another structure is embedded in the structure.
 		structName string
 		src        string
+		comment    string
 		pack       units.Unit
 		Collector  collection.Collector
 	}
@@ -84,6 +85,7 @@ type (
 	InterfacesVisitor struct {
 		src       string
 		ifaceName string
+		comment   string
 		pack      units.Unit
 		parent    units.Unit //Transmitted only when another interface is embedded in the interface.
 		Collector collection.Collector
@@ -92,6 +94,7 @@ type (
 
 	CustomsVisitor struct {
 		src       string
+		comment   string
 		pack      units.Unit
 		parent    units.Unit
 		Collector collection.Collector

@@ -15,6 +15,12 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 	for _, field := range fields.List {
 		structField := units.StructField{}
 
+		var comment string
+
+		if doc := field.Doc; doc != nil {
+			comment = vis.src[doc.Pos()-1 : doc.End()-1]
+		}
+
 		ts, te := field.Type.Pos()-1, field.Type.End()-1
 		fieldType := types.Init(vis.src[ts:te])
 
@@ -31,6 +37,7 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 							structVis := &StructsVisitor{
 								parent:     structure,
 								structName: typeDecl.Name.Name,
+								comment:    comment,
 								src:        vis.src,
 								pack:       vis.pack,
 								Collector:  vis.Collector,
@@ -46,6 +53,7 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 								src:       vis.src,
 								ifaceName: typeDecl.Name.Name,
 								pack:      vis.pack,
+								comment:   comment,
 								isField:   true,
 								parent:    structure,
 								Collector: vis.Collector,
@@ -58,6 +66,7 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 							customVis := &CustomsVisitor{
 								src:       vis.src,
 								pack:      vis.pack,
+								comment:   comment,
 								parent:    structure,
 								Collector: vis.Collector,
 							}
@@ -70,12 +79,12 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 			case *ast.SelectorExpr:
 				s, e := t.Pos()-1, t.End()-1
 				fieldType = types.Init(vis.src[s:e])
-				//println(vis.src[s:e])
 				break
 			}
 		}
 
 		structField.Type = fieldType
+		structField.Comment = comment
 		if field.Tag != nil {
 			structField.Tag = field.Tag.Value
 		}
@@ -162,6 +171,11 @@ func (vis *GeneralVisitor) varsHandle(decl *ast.GenDecl) {
 		switch variable := spec.(type) {
 		case *ast.ValueSpec:
 			var lenNames = len(variable.Names) - 1
+			var comment string
+
+			if doc := variable.Comment; doc != nil {
+				comment = vis.src[doc.Pos()-1 : doc.End()-1]
+			}
 
 			for i := 0; i <= lenNames; i++ {
 				var varName = variable.Names[i].Name
@@ -169,7 +183,7 @@ func (vis *GeneralVisitor) varsHandle(decl *ast.GenDecl) {
 
 				var varUnit = units.NewVar(id(varName), varName)
 				varUnit.IsExported = exported(varName)
-
+				varUnit.Comment = comment
 				if varType != nil {
 					s, e := varType.Pos()-1, varType.End()-1
 					varUnit.Type = types.Init(vis.src[s:e])
@@ -212,9 +226,8 @@ func (vis *GeneralVisitor) varsHandle(decl *ast.GenDecl) {
 func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 	if n.Lparen != token.NoPos && n.Rparen != token.NoPos {
 		var (
-			enumSeriesName string
-			enumFound      bool
-			enumType       types.Type
+			enumFound bool
+			enumType  types.Type
 
 			enums []units.Unit
 			enum  *units.Constant
@@ -226,7 +239,12 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 				var (
 					constName = constant.Names[0].Name
 					value     string
+					comment   string
 				)
+
+				if doc := constant.Comment; doc != nil {
+					comment = vis.src[doc.Pos()-1 : doc.End()-1]
+				}
 
 				if constant.Values != nil {
 					start, end := constant.Values[0].Pos()-1, constant.Values[0].End()-1
@@ -253,6 +271,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 						}
 
 						enum = units.NewConst(id(constName), constName)
+						enum.Comment = comment
 						enum.Type = enumType
 						enum.IsExported = exported(constName)
 						enum.Enum = true
@@ -265,6 +284,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 
 						constUnit := units.NewConst(constId, constName)
 						constUnit.IsExported = exported(constName)
+						constUnit.Comment = comment
 
 						if constant.Type != nil {
 							start, end = constant.Type.Pos()-1, constant.Type.End()-1
@@ -292,7 +312,6 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 				}
 
 				if constant.Values == nil && enumFound && enumType != nil {
-					enumSeriesName += constName
 					enum = units.NewConst(id(constName), constName)
 					enum.Type = enumType
 					enum.IsExported = exported(constName)

@@ -49,12 +49,20 @@ func (vis *GeneralVisitor) Visit(node ast.Node) (w ast.Visitor) {
 		}
 		return vis
 	case *ast.TypeSpec:
+		var comment string
+
+		if doc := n.Comment; doc != nil {
+			comment = vis.src[doc.Pos()-1 : doc.End()-1]
+		}
+
 		switch typeSpec := n.Type.(type) {
 		case *ast.StructType:
 			if modeExist(vis.modes, Structs) {
 				structVis := NewStructVisitor(vis.src, vis.Collection)
 				structVis.structName = n.Name.Name
 				structVis.pack = vis.pack
+				structVis.comment = comment
+
 				ast.Walk(structVis, typeSpec)
 			}
 			return vis
@@ -63,6 +71,7 @@ func (vis *GeneralVisitor) Visit(node ast.Node) (w ast.Visitor) {
 				ifaceVis := NewInterfaceVisitor(vis.src, vis.Collection)
 				ifaceVis.ifaceName = n.Name.Name
 				ifaceVis.pack = vis.pack
+				ifaceVis.comment = comment
 				ast.Walk(ifaceVis, typeSpec)
 			}
 			return vis
@@ -70,6 +79,7 @@ func (vis *GeneralVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			if modeExist(vis.modes, Customs) {
 				customVis := NewCustomVisitor(vis.src, vis.Collection)
 				customVis.pack = vis.pack
+				customVis.comment = comment
 				ast.Walk(customVis, n)
 			}
 			return vis
@@ -88,11 +98,15 @@ func (vis *ImportVisitor) Visit(node ast.Node) (w ast.Visitor) {
 	case *ast.ImportSpec:
 		vis.importsPaths = append(vis.importsPaths, strings.Trim(importSpec.Path.Value, "\""))
 		var (
-			imprt *units.Import
+			imprt = &units.Import{}
 
 			impName string
 			impId   int
 		)
+		doc := importSpec.Doc
+		if doc != nil {
+			imprt.Comment = vis.src[doc.Pos()-1 : doc.End()-1]
+		}
 
 		if importSpec.Name == nil {
 
@@ -141,10 +155,12 @@ func (vis *StructsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 	switch structType := node.(type) {
 	case *ast.StructType:
 		var (
-			structUnit *units.Structure
+			structUnit = &units.Structure{}
 			structName string
 			structId   int
 		)
+
+		structUnit.Comment = vis.comment
 
 		if vis.structName != "" {
 			structName = vis.structName
@@ -164,6 +180,7 @@ func (vis *InterfacesVisitor) Visit(node ast.Node) (w ast.Visitor) {
 	switch interfaceType := node.(type) {
 	case *ast.InterfaceType:
 		ifaceUnit := units.NewIface(id(vis.ifaceName), vis.ifaceName)
+		ifaceUnit.Comment = vis.comment
 
 		if vis.pack != nil {
 			_ = vis.Collector.Add(vis.pack, ifaceUnit)
@@ -239,6 +256,8 @@ func (vis *CustomsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			customUnit = units.NewCustom(id(custom.Name.Name), custom.Name.Name)
 		)
 
+		customUnit.Comment = vis.comment
+
 		customUnit.IsExported = exported(customUnit.GetName())
 		if vis.pack != nil {
 			_ = vis.Collector.Add(vis.pack, customUnit)
@@ -255,6 +274,7 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 	switch funcDecl := node.(type) {
 	case *ast.FuncDecl:
 		var (
+			comment  string
 			funcName = funcDecl.Name.Name
 			funcId   = id(funcName)
 
@@ -277,9 +297,14 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			returns = getParamsOrReturns(funcDecl.Type.Results.List, vis.src)
 		}
 
+		if doc := funcDecl.Doc; doc != nil {
+			comment = vis.src[doc.Pos()-1 : doc.End()-1]
+		}
+
 		switch funcDecl.Recv.NumFields() {
 		case 0:
 			funcUnit := units.NewFunc(funcId, funcName)
+			funcUnit.Comment = comment
 			funcUnit.IsExported = exported(funcName)
 			funcUnit.Signature = signature
 			funcUnit.Returns = returns
@@ -298,6 +323,7 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			var owner = units.Init(ownerId, ownerType, units.GoUnknown)
 
 			funcUnit := units.NewMethod(funcId, funcName)
+			funcUnit.Comment = comment
 			funcUnit.IsExported = exported(funcName)
 			funcUnit.Signature = signature
 			funcUnit.Returns = returns
