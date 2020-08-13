@@ -54,7 +54,7 @@ func (p *Parser) walkFunc() filepath.WalkFunc {
 		}
 
 		set := token.NewFileSet()
-		file, err := parser.ParseFile(set, "", src, 0)
+		file, err := parser.ParseFile(set, "", src, parser.ParseComments)
 
 		if err != nil {
 			return err
@@ -63,7 +63,6 @@ func (p *Parser) walkFunc() filepath.WalkFunc {
 		genVisitor := visitors.NewGeneralVisitor(path, packMainDir, string(src), p.Collector, p.Modes...)
 
 		ast.Walk(genVisitor, file)
-
 		return nil
 	}
 }

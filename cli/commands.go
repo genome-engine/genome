@@ -1,14 +1,14 @@
 package cli
 
 import (
+	"fmt"
 	"github.com/genome-engine/genome/script"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 //Commands
 const (
-	Exec    string = "exec" //genome exec {script_name}: take the script with the specified name from the /scripts folder
+	Run     string = "run" //genome exec {script_name}: take the script with the specified name from the /scripts folder
 	Welcome string = `
 
 						    ____     _____      _   _      ___      __  __     _____ 
@@ -26,7 +26,7 @@ const (
 							     +---------------------------+
 		
 			+----+
-			|exec|	[script_path]: runs a yaml script.
+			|run |	[script_path]: runs a yaml script.
 			+----+
 `
 )
@@ -38,25 +38,26 @@ var (
 	}
 	commands = []*cobra.Command{
 		{
-			Use: Exec,
+			Use: Run,
 			Run: func(cmd *cobra.Command, args []string) {
 				if len(args) == 0 {
-					log.Print("You need to pass the path to the yaml file with the script")
+					fmt.Println("You need to pass the path to the yaml file with the script")
 					return
 				}
+				for _, arg := range args {
+					fmt.Printf("%v script execution running.\n\n", arg)
+					s, err := script.NewScript(arg)
+					if err != nil {
+						fmt.Print(err.Error())
+						return
+					}
 
-				s, err := script.NewScript(args[0])
-				if err != nil {
-					log.Print(err.Error())
-					return
+					if err = s.Execute(); err != nil {
+						fmt.Print(err.Error())
+						return
+					}
+					fmt.Printf("\n%v script execution finished\n", arg)
 				}
-
-				if err = s.Execute(); err != nil {
-					log.Print(err.Error())
-					return
-				}
-
-				log.Print("The use of the scrapbook ended successfully.")
 			},
 		},
 	}

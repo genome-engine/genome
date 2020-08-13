@@ -1,9 +1,5 @@
 package units
 
-import (
-	"github.com/genome-engine/genome/engine/types"
-)
-
 type (
 	Package struct {
 		Selector   Selector
@@ -11,9 +7,8 @@ type (
 		IsExported bool
 		Name       string
 		ID         int
-		types.Type
-		Main bool
-		Path string
+		Main       bool
+		Path       string
 	}
 	Import struct {
 		Selector   Selector
@@ -21,8 +16,7 @@ type (
 		IsExported bool
 		Name       string
 		ID         int
-		types.Type
-		Value string
+		Value      string
 	}
 	Structure struct {
 		Selector   Selector
@@ -30,23 +24,14 @@ type (
 		IsExported bool
 		Name       string
 		ID         int
-		types.Type
-		Fields []StructField
-	}
-	StructField struct {
-		Comment    string
-		Tag        string
-		IsExported bool
-		Name       string
-		Type       types.Type
+		Fields     []StructField
 	}
 	Interface struct {
-		Selector   Selector
-		Comment    string
-		IsExported bool
-		Name       string
-		ID         int
-		types.Type
+		Selector      Selector
+		Comment       string
+		IsExported    bool
+		Name          string
+		ID            int
 		IsStructField bool
 	}
 	Custom struct {
@@ -55,47 +40,45 @@ type (
 		IsExported bool
 		Name       string
 		ID         int
-		types.Type
+		Type       string
 	}
 	Method struct {
-		Selector   Selector
-		Comment    string
-		IsExported bool
-		Name       string
-		ID         int
-		types.Type
+		Selector            Selector
+		Comment             string
+		IsExported          bool
+		Name                string
+		ID                  int
 		InInterfaceDecl     bool
 		Signature           string
-		Parameters, Returns map[string]types.Type
+		Parameters, Returns []Parameter
 		Body                string
 	}
 	Function struct {
-		Selector   Selector
-		Comment    string
-		IsExported bool
-		Name       string
-		ID         int
-		types.Type
+		Selector            Selector
+		Comment             string
+		IsExported          bool
+		Name                string
+		ID                  int
 		Signature           string
-		Parameters, Returns map[string]types.Type
+		Parameters, Returns []Parameter
 		FuncBody            string
 	}
 	Constant struct {
 		Selector   Selector
 		Comment    string
-		IsExported bool
 		Name       string
+		Type       string
+		IsExported bool
+		Enum       bool
 		ID         int
-		types.Type
-		Enum bool
 	}
 	Variable struct {
 		Selector   Selector
-		Comment    string
 		IsExported bool
+		Comment    string
 		Name       string
+		Type       string
 		ID         int
-		types.Type
 	}
 	Unknown struct {
 		Selector   Selector
@@ -103,6 +86,18 @@ type (
 		IsExported bool
 		Name       string
 		ID         int
-		types.Type
+		Type       string
+	}
+
+	StructField struct {
+		Comment    string
+		Tag        string
+		IsExported bool
+		Name       string
+		Type       string
+	}
+	Parameter struct {
+		Name string
+		Type string
 	}
 )

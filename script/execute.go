@@ -17,17 +17,25 @@ func (s *Script) Execute() error {
 		return fmt.Errorf("Parsing Error: %v \n", err.Error())
 	}
 
+	fmt.Println("\t- The parsing phase was a success.")
+
 	if err := s.execTemp(); err != nil {
 		return fmt.Errorf("Templating Error: %v \n", err.Error())
 	}
+
+	fmt.Println("\t- The template filling phase was successful.")
 
 	if err := s.execGen(); err != nil {
 		return fmt.Errorf("Generating Error: %v \n", err.Error())
 	}
 
+	fmt.Println("\t- The generation phase was a success.")
+
 	if err := exec.Command("go", "fmt", s.Generate.Path).Run(); err != nil {
-		return fmt.Errorf("Formating Error: %v \n", err.Error())
+		fmt.Println("\t- Formatting error.")
 	}
+
+	fmt.Println("\t- Script execution was a success.")
 
 	return nil
 }
@@ -58,14 +66,17 @@ func (s *Script) execTemp() error {
 	}
 
 	funcMap := t.FuncMap{
-		"lower":  strings.ToLower,
-		"trim_r": strings.TrimRight,
-		"trim_l": strings.TrimLeft,
-		"trim":   strings.Trim,
-		"f":      temp_env.NewFilterer,
+		"title":    strings.Title,
+		"lower":    strings.ToLower,
+		"upper":    strings.ToUpper,
+		"contains": strings.Contains,
+		"trim_r":   strings.TrimRight,
+		"trim_l":   strings.TrimLeft,
+		"trim":     strings.Trim,
+		"f":        temp_env.NewFilterer,
 	}
 
-	temp, err := t.New("").Funcs(funcMap).Parse(string(src))
+	temp, err := t.New("").Delims("<", ">").Funcs(funcMap).Parse(string(src))
 
 	if err != nil {
 		return err

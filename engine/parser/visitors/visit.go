@@ -1,7 +1,6 @@
 package visitors
 
 import (
-	"github.com/genome-engine/genome/engine/types"
 	"github.com/genome-engine/genome/engine/units"
 	"go/ast"
 	"go/token"
@@ -202,13 +201,11 @@ func (vis *InterfacesVisitor) Visit(node ast.Node) (w ast.Visitor) {
 				s, e := methodType.Pos()-1, methodType.End()-1
 				methodUnit.Signature = methodName + vis.src[s:e]
 
-				methodUnit.Type = types.Init("func " + methodUnit.Signature)
-
 				if methodType.Params != nil {
-					methodUnit.Parameters = getParamsOrReturns(methodType.Params.List, vis.src)
+					methodUnit.Parameters = getParams(methodType.Params.List, vis.src)
 				}
 				if methodType.Results != nil {
-					methodUnit.Returns = getParamsOrReturns(methodType.Results.List, vis.src)
+					methodUnit.Returns = getParams(methodType.Results.List, vis.src)
 				}
 
 				_ = vis.Collector.Add(ifaceUnit, methodUnit)
@@ -274,27 +271,33 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 	switch funcDecl := node.(type) {
 	case *ast.FuncDecl:
 		var (
-			comment  string
-			funcName = funcDecl.Name.Name
-			funcId   = id(funcName)
+			comment     string
+			funcName    = funcDecl.Name.Name
+			funcId      = id(funcName)
+			excludeName = func(sign string) string {
+				for i, char := range sign {
+					if char == '(' {
+						return sign[i:]
+					}
+				}
+				return sign
+			}
 
 			signStart, signEnd = funcDecl.Name.Pos() - 1, funcDecl.Type.End() - 1
-			signature          = "func " + vis.src[signStart:signEnd]
+			signature          = "func " + excludeName(vis.src[signStart:signEnd])
 
-			typ = types.Init(signature)
-
-			params  = map[string]types.Type{}
-			returns = map[string]types.Type{}
+			params  []units.Parameter
+			returns []units.Parameter
 
 			bodyStart, bodyEnd = funcDecl.Body.Pos() - 1, funcDecl.Body.End() - 1
 			body               = vis.src[bodyStart:bodyEnd]
 		)
 
 		if funcDecl.Type.Params != nil {
-			params = getParamsOrReturns(funcDecl.Type.Params.List, vis.src)
+			params = getParams(funcDecl.Type.Params.List, vis.src)
 		}
 		if funcDecl.Type.Results != nil {
-			returns = getParamsOrReturns(funcDecl.Type.Results.List, vis.src)
+			returns = getParams(funcDecl.Type.Results.List, vis.src)
 		}
 
 		if doc := funcDecl.Doc; doc != nil {
@@ -310,7 +313,6 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			funcUnit.Returns = returns
 			funcUnit.Parameters = params
 			funcUnit.FuncBody = body
-			funcUnit.Type = typ
 
 			if vis.pack != nil {
 				_ = vis.Collection.Add(vis.pack, funcUnit)
@@ -329,7 +331,6 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			funcUnit.Returns = returns
 			funcUnit.Parameters = params
 			funcUnit.Body = body
-			funcUnit.Type = typ
 
 			_ = vis.Collection.Add(owner, funcUnit)
 			if vis.pack != nil {

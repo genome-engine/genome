@@ -2,7 +2,6 @@ package visitors
 
 import (
 	"github.com/genome-engine/genome/engine/identifier"
-	"github.com/genome-engine/genome/engine/types"
 	"github.com/genome-engine/genome/engine/units"
 	"go/ast"
 	"go/token"
@@ -22,7 +21,7 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 		}
 
 		ts, te := field.Type.Pos()-1, field.Type.End()-1
-		fieldType := types.Init(vis.src[ts:te])
+		fieldType := vis.src[ts:te]
 
 		if field.Type != nil {
 			switch t := field.Type.(type) {
@@ -32,7 +31,7 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 					case *ast.TypeSpec:
 						switch structType := typeDecl.Type.(type) {
 						case *ast.StructType:
-							fieldType = types.NewStructType(typeDecl.Name.Name)
+							fieldType = typeDecl.Name.Name
 
 							structVis := &StructsVisitor{
 								parent:     structure,
@@ -47,7 +46,7 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 
 							break
 						case *ast.InterfaceType:
-							fieldType = types.NewIfaceType(typeDecl.Name.Name)
+							fieldType = typeDecl.Name.Name
 
 							ifaceVis := &InterfacesVisitor{
 								src:       vis.src,
@@ -61,7 +60,7 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 							ast.Walk(ifaceVis, structType)
 							break
 						default:
-							fieldType = types.NewCustomType(typeDecl.Name.Name)
+							fieldType = typeDecl.Name.Name
 
 							customVis := &CustomsVisitor{
 								src:       vis.src,
@@ -78,7 +77,7 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 				}
 			case *ast.SelectorExpr:
 				s, e := t.Pos()-1, t.End()-1
-				fieldType = types.Init(vis.src[s:e])
+				fieldType = vis.src[s:e]
 				break
 			}
 		}
@@ -91,8 +90,8 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 
 		switch {
 		case len(field.Names) == 0:
-			structField.Name = fieldType.Definition()
-			structField.IsExported = exported(fieldType.Definition())
+			structField.Name = fieldType
+			structField.IsExported = exported(fieldType)
 			structFields = append(structFields, structField)
 			break
 		case len(field.Names) == 1:
@@ -127,24 +126,25 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 	return structFields
 }
 
-func getParamsOrReturns(fields []*ast.Field, src string) map[string]types.Type {
-	var list = map[string]types.Type{}
+func getParams(fields []*ast.Field, src string) []units.Parameter {
+	var list []units.Parameter
+	var parameter units.Parameter
 
 	for _, result := range fields {
 		s, e := result.Type.Pos()-1, result.Type.End()-1
-		resultTypeName := src[s:e]
-		resultType := types.Init(resultTypeName)
+		parameter.Type = src[s:e]
 
 		switch {
 		case len(result.Names) == 0:
-			list[resultTypeName] = resultType
+			parameter.Name = parameter.Type
+			list = append(list, parameter)
 		case len(result.Names) == 1:
-			resultName := result.Names[0].Name
-			list[resultName] = resultType
+			parameter.Name = result.Names[0].Name
+			list = append(list, parameter)
 		case len(result.Names) > 1:
 			for _, ident := range result.Names {
-				resultName := ident.Name
-				list[resultName] = resultType
+				parameter.Name = ident.Name
+				list = append(list, parameter)
 			}
 		}
 	}
@@ -186,7 +186,7 @@ func (vis *GeneralVisitor) varsHandle(decl *ast.GenDecl) {
 				varUnit.Comment = comment
 				if varType != nil {
 					s, e := varType.Pos()-1, varType.End()-1
-					varUnit.Type = types.Init(vis.src[s:e])
+					varUnit.Type = vis.src[s:e]
 
 					_ = vis.Collection.Add(vis.pack, varUnit)
 					continue
@@ -199,7 +199,7 @@ func (vis *GeneralVisitor) varsHandle(decl *ast.GenDecl) {
 						typName += "64"
 					}
 
-					typ := types.Init(typName)
+					typ := typName
 					varUnit.Type = typ
 					_ = vis.Collection.Add(vis.pack, varUnit)
 					continue
@@ -207,13 +207,13 @@ func (vis *GeneralVisitor) varsHandle(decl *ast.GenDecl) {
 					s, e := value.Type.Pos()-1, value.Type.End()-1
 					typName := vis.src[s:e]
 
-					typ := types.Init(typName)
+					typ := typName
 					varUnit.Type = typ
 					_ = vis.Collection.Add(vis.pack, varUnit)
 					continue
 				case *ast.SelectorExpr:
 					s, e := value.Pos()-1, value.End()-1
-					varUnit.Type = types.Init(vis.src[s:e])
+					varUnit.Type = vis.src[s:e]
 
 					_ = vis.Collection.Add(vis.pack, varUnit)
 					continue
@@ -227,7 +227,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 	if n.Lparen != token.NoPos && n.Rparen != token.NoPos {
 		var (
 			enumFound bool
-			enumType  types.Type
+			enumType  string
 
 			enums []units.Unit
 			enum  *units.Constant
@@ -259,15 +259,12 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 						}
 
 						enumFound = true
-						enumType = types.Init("int")
+						enumType = "int"
 
 						if constant.Type != nil {
 							start, end = constant.Type.Pos()-1, constant.Type.End()-1
 							typeName := vis.src[start:end]
-							enumType = types.Init(typeName)
-							if enumType.Descriptor() != types.Imported {
-								enumType = types.NewCustomType(typeName)
-							}
+							enumType = typeName
 						}
 
 						enum = units.NewConst(id(constName), constName)
@@ -279,7 +276,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 
 						continue
 					case false:
-						var constType types.Type
+						var constType string
 						var constId = id(constName)
 
 						constUnit := units.NewConst(constId, constName)
@@ -289,7 +286,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 						if constant.Type != nil {
 							start, end = constant.Type.Pos()-1, constant.Type.End()-1
 							typeName := vis.src[start:end]
-							constType = types.Init(typeName)
+							constType = typeName
 							constUnit.Type = constType
 
 							_ = vis.Collection.Add(vis.pack, constUnit)
@@ -302,7 +299,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 							if typeName == "float" {
 								typeName += "64"
 							}
-							constType = types.Init(typeName)
+							constType = typeName
 							constUnit.Type = constType
 
 							_ = vis.Collection.Add(vis.pack, constUnit)
@@ -311,7 +308,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 					}
 				}
 
-				if constant.Values == nil && enumFound && enumType != nil {
+				if constant.Values == nil && enumFound && enumType != "" {
 					enum = units.NewConst(id(constName), constName)
 					enum.Type = enumType
 					enum.IsExported = exported(constName)

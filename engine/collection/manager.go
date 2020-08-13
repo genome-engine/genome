@@ -2,8 +2,8 @@ package collection
 
 import (
 	"fmt"
-	"github.com/genome-engine/genome/engine/types"
 	"github.com/genome-engine/genome/engine/units"
+	"strings"
 )
 
 func (c *Collection) Clear() {
@@ -78,23 +78,19 @@ func (c *Collection) Print(selectors ...units.Selector) {
 
 	for root, children := range c.UnitsMap() {
 		if SelectorExist(selectors, root.GetSelector()) {
-			fmt.Printf("%v{GetId: %v, Name: %v,GetType: %v, TypeDescriptor:%v}\n",
+			fmt.Printf("%v{GetId: %v, Name: %v}\n",
 				root.GetSelector().Name(),
 				root.GetId(),
 				root.GetName(),
-				root.GetType().Definition(),
-				root.GetType().Descriptor().String(),
 			)
 			if len(children) == 0 {
 				fmt.Printf("\t- No children\n")
 			}
 			for _, child := range children {
-				fmt.Printf("\t- %v{GetId: %v, Name: %v, GetType: %v, TypeDescriptor:%v}\n",
+				fmt.Printf("\t- %v{GetId: %v, Name: %v}\n",
 					child.GetSelector().Name(),
 					child.GetId(),
 					child.GetName(),
-					child.GetType().Definition(),
-					child.GetType().Descriptor().String(),
 				)
 			}
 			println()
@@ -107,9 +103,9 @@ func (c *Collection) Linking() {
 		switch unit.GetSelector() {
 		case units.GoConst:
 			con := unit.(*units.Constant)
-			if con.Enum && con.GetType().Descriptor() == types.Custom {
+			if con.Enum && con.Type != "int" {
 				for _, custom := range c.rootTable {
-					if custom.GetSelector() == units.GoCustom && custom.GetName() == con.GetType().Definition() {
+					if custom.GetSelector() == units.GoCustom && strings.Contains(con.Type, custom.GetName()) {
 						var customMethods []units.Unit
 						c.childrenTable[custom.GetId()] = append(c.childrenTable[custom.GetId()], con)
 						for _, method := range c.childrenTable[custom.GetId()] {
