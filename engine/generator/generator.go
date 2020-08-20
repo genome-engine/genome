@@ -8,6 +8,22 @@ import (
 	"strings"
 )
 
+func (i *GenerationInfo) log(info string, args ...interface{}) {
+	if !i.logs {
+		return
+	}
+	i.count++
+	fmt.Printf("\t\t%d.[Generator]%v\n", i.count, fmt.Sprintf(info, args...))
+}
+
+func (l *InsertionLabel) log(info string, args ...interface{}) {
+	if !l.logs {
+		return
+	}
+	l.count++
+	fmt.Printf("\t\t\t%d %v.\n", l.count, fmt.Sprintf(info, args...))
+}
+
 const InsertPrefix = "#genome-insert:"
 const EndInsertPrefix = "#genome-insert-end"
 
@@ -15,28 +31,33 @@ type (
 	Mode int
 
 	Generator struct {
+		logs  bool
 		infos []GenerationInfo
 	}
 
 	GenerationInfo struct {
 		Mode
+		logs   bool
 		Source string
 		Path   string
 		InsertionLabel
+		count int
 	}
 
 	InsertionLabel struct {
+		count     int
+		logs      bool
 		LabelName string
 		insertionBuffer
 	}
 
 	insertionBuffer struct {
-		begin, center, src, end string
+		begin, end string
 	}
 )
 
-func NewGenerator(infos ...GenerationInfo) *Generator {
-	return &Generator{infos: infos}
+func NewGenerator(logs bool, infos ...GenerationInfo) *Generator {
+	return &Generator{infos: infos, logs: logs}
 }
 
 const (
@@ -55,72 +76,103 @@ func (m Mode) String() string { return map[Mode]string{InsertToFile: "insert", C
 
 func (g *Generator) Generate() error {
 	for _, info := range g.infos {
+		info.logs = g.logs
+		info.log("Generation start with mode: %v", info.Mode.String())
 		switch info.Mode {
 		case CreateFile:
 			file, err := os.Create(info.Path)
 			if err != nil {
+				info.log("Error from creating.Exit with error.")
 				return err
 			}
 
+			info.log("Writing source into file")
 			_, err = file.WriteString(info.Source)
+
+			_ = file.Close()
+
+			info.formatting()
+
 			return err
 		case InsertToFile:
+			info.log("Reading original file: %v", info.Path)
 			originalSource, err := ioutil.ReadFile(info.Path)
 			if err != nil {
+				fmt.Printf("\t\tError from reading.Exit with error.")
 				return err
 			}
-			err = info.InsertionLabel.fillBuffer(string(originalSource), info.Source)
+			info.log("Filling insertion buffer")
+			info.InsertionLabel.logs = info.logs
+			err = info.InsertionLabel.fillBuffer(string(originalSource))
 			if err != nil {
+				info.log("Error from filling. Exit with error")
 				return err
 			}
 
 			buffer := info.insertionBuffer
 
-			newSource := buffer.begin + buffer.center + buffer.src + buffer.end
+			newSource := buffer.begin + info.Source + "\n" + buffer.end
+			if newSource == "" {
+				info.log("New source is empty.")
+			}
 
+			info.log("Removing old file: %v", info.Path)
 			err = os.Remove(info.Path)
 			if err != nil {
+				info.log("Error from removing. Exit with error.")
 				return err
 			}
-
+			info.log("Recreating old file with new source.")
 			file, err := os.Create(info.Path)
 			if err != nil {
+				info.log("Error from creating.Exit with error.")
 				return err
 			}
 
+			info.log("Writing new source")
 			_, err = file.WriteString(newSource)
 			if err != nil {
+				info.log("Error from writing. Exit with error.")
 				return err
 			}
 
 			_ = file.Close()
 
-			return exec.Command("go", []string{"fmt", info.Path}...).Run()
+			info.formatting()
+			return nil
 		}
 	}
 
 	return nil
 }
 
-func (l *InsertionLabel) fillBuffer(originalSource, addonSource string) error {
-	var beginIndex int
-	l.src = "\n" + addonSource + "\n"
+func (l *InsertionLabel) fillBuffer(originalSource string) error {
+	var b strings.Builder
+	var found bool
 
 	lines := strings.Split(originalSource, "\n")
 
+	l.log("Iterating from source lines")
 	for i, line := range lines {
+		if !found {
+			b.WriteString(line)
+		}
 		switch {
 		case strings.Contains(line, InsertPrefix+l.LabelName):
-			beginIndex = i + 1
-			l.insertionBuffer.begin = strings.Join(lines[:i+1], "\n")
+			l.log("Label %v was found", InsertPrefix+l.LabelName)
+
+			found = true
+			l.insertionBuffer.begin = b.String()
+			b.Reset()
 			continue
 		case strings.Contains(line, EndInsertPrefix):
-			if beginIndex == 0 && l.insertionBuffer.begin == "" {
+			l.log("%v was found", EndInsertPrefix)
+			if !found {
+				l.log("Label %v not was found", InsertPrefix+l.LabelName)
 				return fmt.Errorf("The label for the end of insertion is set," +
 					" but it was not possible to find a named label for the beginning of insertion in this file.txt. ")
 			}
 
-			l.center = strings.Join(lines[beginIndex:i], "\n")
 			l.end = strings.Join(lines[i:], "\n")
 			continue
 		default:
@@ -129,4 +181,12 @@ func (l *InsertionLabel) fillBuffer(originalSource, addonSource string) error {
 
 	}
 	return nil
+}
+
+func (i *GenerationInfo) formatting() {
+	i.log("Executing go fmt %v", i.Path)
+	err := exec.Command("go", "fmt", i.Path).Run()
+	if err != nil {
+		i.log("[Warning] fmt error.")
+	}
 }

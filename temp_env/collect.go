@@ -47,4 +47,13 @@ func (e *Env) collect() {
 			}
 		}
 	}
+	e.log("Total imports: %d", len(e.Imports))
+	e.log("Total packages: %d", len(e.Packs))
+	e.log("Total structs: %d", len(e.Structs))
+	e.log("Total interfaces: %d", len(e.Ifaces))
+	e.log("Total customs: %d", len(e.Customs))
+	e.log("Total functions: %d", len(e.Funcs))
+	e.log("Total methods: %d", len(e.Methods))
+	e.log("Total variables: %d", len(e.Vars))
+	e.log("Total unknowns: %d", len(e.Unknowns))
 }

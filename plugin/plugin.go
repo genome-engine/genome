@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const Name = "Name"
+const Name = "out"
 const Func = "Wrapper"
 
 func Load() map[string]interface{} {
@@ -24,12 +24,12 @@ func Load() map[string]interface{} {
 		if strings.HasSuffix(info.Name(), ".so") {
 			p, err := plugin.Open(path)
 			if err != nil {
-				return fmt.Errorf("Plugin Loading Error: %v\n ", err.Error())
+				return fmt.Errorf("Plugin Loading Error: %s\n ", err)
 			}
 
 			name, err := p.Lookup(Name)
 			if err != nil {
-				return fmt.Errorf("Plugin Name Loading Error: %v ", err.Error())
+				return fmt.Errorf("Plugin out Loading Error: %s ", err)
 			}
 
 			wrapper, err := p.Lookup(Func)

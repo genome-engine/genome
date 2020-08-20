@@ -18,17 +18,19 @@ import (
 const Filename = "interfaces"
 
 type DefaultInterfaceFinder struct {
-	collection.Collector
+	collection.Collection
 	locations       map[string]string
 	preservingPaths map[string]collection.UnitsMap
 	savePath        string
+	logs            bool
 }
 
-func New(savePath string, locations map[string]string, collector collection.Collector) *DefaultInterfaceFinder {
+func New(savePath string, locations map[string]string, collector collection.Collection, logs bool) *DefaultInterfaceFinder {
 	return &DefaultInterfaceFinder{
+		logs:            logs,
 		savePath:        savePath,
 		locations:       locations,
-		Collector:       collector,
+		Collection:      collector,
 		preservingPaths: map[string]collection.UnitsMap{},
 	}
 }
@@ -48,7 +50,7 @@ func (finder *DefaultInterfaceFinder) Start() error {
 	return nil
 }
 func (finder *DefaultInterfaceFinder) SaveResult() error {
-	newFormatter := formatter.NewFormatter(finder.Collector)
+	newFormatter := formatter.NewFormatter(finder.Collection, finder.logs)
 	for lock := range finder.locations {
 		if err := os.Mkdir(path.Join(finder.savePath, lock), os.ModePerm); os.IsExist(err) {
 			continue
@@ -90,7 +92,7 @@ func (finder *DefaultInterfaceFinder) walkFunc() filepath.WalkFunc {
 			set     = token.NewFileSet()
 			visitor = visitors.NewGeneralVisitor(
 				path, packMainDir, string(src),
-				collection.New(),
+				collection.New("Finder", finder.logs),
 				visitors.Interfaces,
 			)
 		)
@@ -110,7 +112,7 @@ func (finder *DefaultInterfaceFinder) walkFunc() filepath.WalkFunc {
 		}
 
 		// transfer of units collected by visitor to interface_finder
-		if err := finder.Collector.Merge(visitor.Collection); err != nil {
+		if err := finder.Collection.Merge(visitor.Collection); err != nil {
 			return err
 		}
 

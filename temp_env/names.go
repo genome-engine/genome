@@ -21,6 +21,8 @@ func (list *UnknownList) Names() []string {
 	}
 	return names
 }
+
+//Returns all structs names.
 func (list *StructureList) Names() []string {
 	var names []string
 	for _, el := range *list {

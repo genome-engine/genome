@@ -210,7 +210,7 @@ func (vis *InterfacesVisitor) Visit(node ast.Node) (w ast.Visitor) {
 
 				_ = vis.Collector.Add(ifaceUnit, methodUnit)
 				if vis.parent != nil {
-					//println(vis.parent.Name())
+					//println(vis.parent.out())
 					_ = vis.Collector.Add(vis.parent, ifaceUnit)
 				}
 			case *ast.Ident:

@@ -11,20 +11,23 @@ import (
 type (
 	Script struct {
 		result
-		Generate `yaml:"generate"`
-		Parse    string `yaml:"parse"`
-		Template string `yaml:"template"`
+		Delimiter `yaml:"delimiters"`
+		Generate  `yaml:"generate"`
+		Logs      bool   `yaml:"logs"`
+		Parse     string `yaml:"parse"`
+		Template  string `yaml:"template"`
+		count     int
 	}
 
 	result struct {
-		parse c.Collector
+		parse c.Collection
 		temp  string
 	}
 
 	Generate struct {
-		Path string `yaml:"path"`
-		Mode string `yaml:"mode"`
-		Tag  string `yaml:"tag"`
+		Path  string `yaml:"path"`
+		Mode  string `yaml:"mode"`
+		Label string `yaml:"label"`
 	}
 )
 

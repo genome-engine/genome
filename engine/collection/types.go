@@ -1,35 +1,15 @@
 package collection
 
 import (
+	"fmt"
 	"github.com/genome-engine/genome/engine/units"
 )
 
 type (
-	//UnitsSearcher is used in the templating engine.
-	UnitsSearcher interface {
-		Search(selectors ...units.Selector) []units.Unit
-		SearchChildren(unit units.Unit, selectors ...units.Selector) ([]units.Unit, error)
-		SearchParents(unit units.Unit, selector ...units.Selector) ([]units.Unit, error)
-		SearchById(id int) units.Unit
-	}
-
-	//UnitsManager is used in parser.
-	UnitsManager interface {
-		Add(root units.Unit, children ...units.Unit) error
-		Merge(collector Collector) error
-		Linking()
-		Clear()
-	}
-
-	//The Collector simply combines the UnitsSearcher and the UnitsManager
-	Collector interface {
-		UnitsMap() map[units.Unit][]units.Unit
-		Print(selectors ...units.Selector)
-		UnitsManager
-		UnitsSearcher
-	}
-
 	Collection struct {
+		logs          bool
+		count         int
+		qualifier     string
 		unitsMap      UnitsMap
 		rootTable     map[int]units.Unit
 		childrenTable map[int][]units.Unit
@@ -38,10 +18,27 @@ type (
 	UnitsMap map[units.Unit][]units.Unit
 )
 
-func New() *Collection {
-	return &Collection{
+func New(qualifier string, logs bool) *Collection {
+	c := &Collection{
+		logs:          logs,
+		qualifier:     qualifier,
 		unitsMap:      map[units.Unit][]units.Unit{},
 		rootTable:     map[int]units.Unit{},
 		childrenTable: map[int][]units.Unit{},
 	}
+	c.log("Collection was crated.")
+	return c
+}
+
+func (c *Collection) log(info string, args ...interface{}) {
+	if !c.logs {
+		return
+	}
+	c.count++
+	fmt.Printf("\t\t%d.[Collection:%v]%v\n", c.count, c.qualifier, fmt.Sprintf(info, args...))
+}
+
+func (c *Collection) ChangeQualifier(qualifier string) {
+	c.qualifier = qualifier
+	c.count = 0
 }

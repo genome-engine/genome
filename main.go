@@ -1,6 +1,8 @@
 package main
 
-import "github.com/genome-engine/genome/cli"
+import (
+	"github.com/genome-engine/genome/cli"
+)
 
 func main() {
 	err := cli.GetCli().Execute()

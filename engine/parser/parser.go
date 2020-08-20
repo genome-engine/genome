@@ -14,25 +14,28 @@ import (
 
 type (
 	Parser struct {
+		logs  bool
+		count int
 		Config
 	}
 	Config struct {
-		Interfaces collection.Collector
-		Collector  collection.Collector
+		Interfaces collection.Collection
+		Collection collection.Collection
 		Modes      []visitors.VisitMode
 		Path       string
 	}
 )
 
-func New(config Config) *Parser {
+func New(config Config, logs bool) *Parser {
+	config.Collection.ChangeQualifier("Parsing")
 	if config.Modes == nil {
 		config.Modes = visitors.AllModes
 	}
-	return &Parser{Config: config}
+	return &Parser{Config: config, logs: logs}
 }
 
 func (p *Parser) Parse() error {
-	if err := p.Collector.Merge(p.Interfaces); err != nil {
+	if err := p.Collection.Merge(p.Interfaces); err != nil {
 		return err
 	}
 	return filepath.Walk(p.Path, p.walkFunc())
@@ -60,7 +63,7 @@ func (p *Parser) walkFunc() filepath.WalkFunc {
 			return err
 		}
 
-		genVisitor := visitors.NewGeneralVisitor(path, packMainDir, string(src), p.Collector, p.Modes...)
+		genVisitor := visitors.NewGeneralVisitor(path, packMainDir, string(src), p.Collection, p.Modes...)
 
 		ast.Walk(genVisitor, file)
 		return nil

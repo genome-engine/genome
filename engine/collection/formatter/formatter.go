@@ -10,14 +10,14 @@ import (
 const FileExtension string = ".collection"
 
 type Formatter struct {
-	c.Collector
+	c.Collection
 }
 
-func NewFormatter(collector c.Collector) *Formatter {
+func NewFormatter(collector c.Collection, logs bool) *Formatter {
 	if collector == nil {
-		collector = c.New(c.WithoutChildless)
+		collector = c.New("Formatting", logs)
 	}
-	return &Formatter{Collector: collector}
+	return &Formatter{Collection: collector}
 }
 
 func (f *Formatter) ToText() string {
@@ -40,9 +40,9 @@ func (f *Formatter) ToText() string {
 	return text.String()
 }
 
-func (f *Formatter) ToCollection(collectionString string) c.Collector {
+func (f *Formatter) ToCollection(collectionString string) c.Collection {
 	if collectionString == "" {
-		return f.Collector
+		return f.Collection
 	}
 
 	var root units.Unit
@@ -62,7 +62,7 @@ func (f *Formatter) ToCollection(collectionString string) c.Collector {
 		}
 	}
 
-	return f.Collector
+	return f.Collection
 }
 
 func (Formatter) ObjMapToText(objectMap map[units.Unit][]units.Unit) string {

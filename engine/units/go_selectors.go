@@ -22,10 +22,10 @@ var selectors = map[GoSelector]string{
 	GoUnknown:   "Unknown",
 	GoPackage:   "Package",
 	GoStruct:    "Struct",
-	GoCustom:    "Custom", //Subtype Name {{no struct}}
+	GoCustom:    "Custom", //Subtype out {{no struct}}
 	GoImport:    "Import",
 	GoConst:     "Const",
-	GoMethod:    "Method", //func(owner) Name(){}
+	GoMethod:    "Method", //func(owner) out(){}
 	GoFunc:      "Func",
 	GoVar:       "Var",
 }

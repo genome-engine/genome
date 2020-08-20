@@ -60,7 +60,7 @@ type (
 		path         string
 		packMainDir  string
 		src          string
-		Collection   collection.Collector
+		Collection   collection.Collection
 		modes        []VisitMode
 		pack         units.Unit
 		importsPaths []string
@@ -68,7 +68,7 @@ type (
 
 	ImportVisitor struct {
 		src          string
-		Collector    collection.Collector
+		Collector    collection.Collection
 		pack         units.Unit
 		importsPaths []string
 	}
@@ -79,7 +79,7 @@ type (
 		src        string
 		comment    string
 		pack       units.Unit
-		Collector  collection.Collector
+		Collector  collection.Collection
 	}
 
 	InterfacesVisitor struct {
@@ -88,7 +88,7 @@ type (
 		comment   string
 		pack      units.Unit
 		parent    units.Unit //Transmitted only when another interface is embedded in the interface.
-		Collector collection.Collector
+		Collector collection.Collection
 		isField   bool
 	}
 
@@ -97,14 +97,14 @@ type (
 		comment   string
 		pack      units.Unit
 		parent    units.Unit
-		Collector collection.Collector
+		Collector collection.Collection
 	}
 
 	FuncsVisitor struct {
 		src        string
 		pack       units.Unit
 		parent     units.Unit
-		Collection collection.Collector
+		Collection collection.Collection
 	}
 )
 
