@@ -167,6 +167,7 @@ func (vis *StructsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			structUnit = units.NewStruct(structId, structName)
 			structUnit.Fields = vis.getFields(structType.Fields, structUnit)
 			structUnit.IsExported = exported(structName)
+
 			_ = vis.Collector.Add(vis.pack, structUnit)
 			if vis.parent != nil {
 				_ = vis.Collector.Add(vis.parent, structUnit)
@@ -256,6 +257,10 @@ func (vis *CustomsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 		customUnit.Comment = vis.comment
 
 		customUnit.IsExported = exported(customUnit.GetName())
+		if custom.Type != nil {
+			customUnit.Type = vis.src[custom.Type.Pos()-1 : custom.Type.End()-1]
+		}
+
 		if vis.pack != nil {
 			_ = vis.Collector.Add(vis.pack, customUnit)
 		}

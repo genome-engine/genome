@@ -14,5 +14,5 @@ var Funcs = map[string]interface{}{
 	"trim_r":   strings.TrimRight,
 	"trim_l":   strings.TrimLeft,
 	"trim":     strings.Trim,
-	"f":        temp_env.NewFilterer,
+	"f":        temp_env.NewFilter,
 }

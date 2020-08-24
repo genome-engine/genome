@@ -18,14 +18,14 @@ func GenerateID(objectName string) int {
 	if objectName == "" {
 		return 0
 	}
-
-	var control int
+	var control, last int
 
 	for _, letter := range objectName {
 		if num, ok := alphabet[byte(letter)]; ok {
-			control += num
+			control += num + last
+			last = num
 		}
 	}
 
-	return len(objectName) * control
+	return control
 }

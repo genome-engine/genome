@@ -3,8 +3,8 @@ package script
 type Delimiter int
 
 const (
-	Arrow Delimiter = iota
-	Braces
+	Braces Delimiter = iota
+	Arrow
 )
 
 var delimiters = map[Delimiter][]string{Arrow: {"<", ">"}, Braces: {"{{", "}}"}}

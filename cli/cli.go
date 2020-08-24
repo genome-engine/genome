@@ -5,6 +5,6 @@ import (
 )
 
 func GetCli() *cobra.Command {
-	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(runCmd, getScriptCmd)
 	return rootCmd
 }

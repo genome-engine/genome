@@ -12,6 +12,7 @@ func (c *Collection) Add(root units.Unit, children ...units.Unit) error {
 		c.log("Error from collecting. Exit with error.")
 		return fmt.Errorf("Passed root is empty - no addition possible. ")
 	}
+	//For logging informing.
 	var adding string
 	var addingCount int
 	var add = func(unit units.Unit) {
@@ -22,6 +23,7 @@ func (c *Collection) Add(root units.Unit, children ...units.Unit) error {
 		}
 	}
 
+	//Getting root id.
 	var key = root.GetId()
 
 	if r, ok := c.rootTable[key]; !ok {

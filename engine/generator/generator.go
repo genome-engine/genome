@@ -155,7 +155,7 @@ func (l *InsertionLabel) fillBuffer(originalSource string) error {
 	l.log("Iterating from source lines")
 	for i, line := range lines {
 		if !found {
-			b.WriteString(line)
+			b.WriteString(line + "\n")
 		}
 		switch {
 		case strings.Contains(line, InsertPrefix+l.LabelName):

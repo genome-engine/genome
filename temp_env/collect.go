@@ -7,53 +7,53 @@ func (e *Env) collect() {
 		switch u := unit.(type) {
 		case *units.Variable:
 			if !e.exist(variables, unit) {
-				e.Vars = append(e.Vars, *u)
+				*e.vars = append(*e.vars, *u)
 			}
 		case *units.Constant:
 			if !e.exist(constants, unit) {
-				e.Consts = append(e.Consts, *u)
+				*e.consts = append(*e.consts, *u)
 			}
 		case *units.Function:
 			if !e.exist(functions, unit) {
-				e.Funcs = append(e.Funcs, *u)
+				*e.funcs = append(*e.funcs, *u)
 			}
 		case *units.Package:
 			if !e.exist(packages, unit) {
-				e.Packs = append(e.Packs, *u)
+				*e.packs = append(*e.packs, *u)
 			}
 		case *units.Import:
 			if !e.exist(imports, unit) {
-				e.Imports = append(e.Imports, *u)
+				*e.imports = append(*e.imports, *u)
 			}
 		case *units.Structure:
 			if !e.exist(structures, unit) {
-				e.Structs = append(e.Structs, *u)
+				*e.structs = append(*e.structs, *u)
 			}
 		case *units.Interface:
 			if !e.exist(interfaces, unit) {
-				e.Ifaces = append(e.Ifaces, *u)
+				*e.ifaces = append(*e.ifaces, *u)
 			}
 		case *units.Method:
 			if !e.exist(methods, unit) {
-				e.Methods = append(e.Methods, *u)
+				*e.methods = append(*e.methods, *u)
 			}
 		case *units.Unknown:
 			if !e.exist(unknowns, unit) {
-				e.Unknowns = append(e.Unknowns, *u)
+				*e.unknowns = append(*e.unknowns, *u)
 			}
 		case *units.Custom:
 			if !e.exist(customs, unit) {
-				e.Customs = append(e.Customs, *u)
+				*e.customs = append(*e.customs, *u)
 			}
 		}
 	}
-	e.log("Total imports: %d", len(e.Imports))
-	e.log("Total packages: %d", len(e.Packs))
-	e.log("Total structs: %d", len(e.Structs))
-	e.log("Total interfaces: %d", len(e.Ifaces))
-	e.log("Total customs: %d", len(e.Customs))
-	e.log("Total functions: %d", len(e.Funcs))
-	e.log("Total methods: %d", len(e.Methods))
-	e.log("Total variables: %d", len(e.Vars))
-	e.log("Total unknowns: %d", len(e.Unknowns))
+	e.log("Total imports: %d", len(*e.imports))
+	e.log("Total packages: %d", len(*e.packs))
+	e.log("Total structs: %d", len(*e.structs))
+	e.log("Total interfaces: %d", len(*e.ifaces))
+	e.log("Total customs: %d", len(*e.customs))
+	e.log("Total functions: %d", len(*e.funcs))
+	e.log("Total methods: %d", len(*e.methods))
+	e.log("Total variables: %d", len(*e.vars))
+	e.log("Total unknowns: %d", len(*e.unknowns))
 }
