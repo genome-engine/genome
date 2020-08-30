@@ -1,23 +1,26 @@
 package temp_env
 
-import "github.com/genome-engine/genome/engine/units"
+import (
+	"github.com/genome-engine/genome/engine/collection"
+	"github.com/genome-engine/genome/engine/units"
+)
 
-func (e *Env) collect() {
-	for _, unit := range e.Collection.Search() {
+func (e *env) collect(collection collection.Collection) {
+	for _, unit := range collection.Search() {
 		switch u := unit.(type) {
-		case *units.Variable:
+		case *units.Var:
 			if !e.exist(variables, unit) {
 				*e.vars = append(*e.vars, *u)
 			}
-		case *units.Constant:
+		case *units.Const:
 			if !e.exist(constants, unit) {
 				*e.consts = append(*e.consts, *u)
 			}
-		case *units.Function:
+		case *units.Func:
 			if !e.exist(functions, unit) {
 				*e.funcs = append(*e.funcs, *u)
 			}
-		case *units.Package:
+		case *units.Pack:
 			if !e.exist(packages, unit) {
 				*e.packs = append(*e.packs, *u)
 			}
@@ -25,11 +28,11 @@ func (e *Env) collect() {
 			if !e.exist(imports, unit) {
 				*e.imports = append(*e.imports, *u)
 			}
-		case *units.Structure:
+		case *units.Struct:
 			if !e.exist(structures, unit) {
 				*e.structs = append(*e.structs, *u)
 			}
-		case *units.Interface:
+		case *units.Iface:
 			if !e.exist(interfaces, unit) {
 				*e.ifaces = append(*e.ifaces, *u)
 			}

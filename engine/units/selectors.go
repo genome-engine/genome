@@ -18,9 +18,9 @@ const (
 
 //The names are used for further output to the console.
 var selectors = map[GoSelector]string{
-	GoInterface: "Interface",
+	GoInterface: "Iface",
 	GoUnknown:   "Unknown",
-	GoPackage:   "Package",
+	GoPackage:   "Pack",
 	GoStruct:    "Struct",
 	GoCustom:    "Custom", //Subtype out {{no struct}}
 	GoImport:    "Import",
@@ -56,7 +56,7 @@ var possibleContains = map[GoSelector][]Selector{
 	GoImport: nil, GoVar: nil,
 }
 
-//The Package method is equivalent to the String method.
+//The Pack method is equivalent to the String method.
 //But if the Selector is not known, it will return Unknown.
 func (s GoSelector) Name() string {
 	if typ, ok := selectors[s]; ok {

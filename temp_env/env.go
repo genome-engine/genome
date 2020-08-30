@@ -38,24 +38,28 @@ var fields = []string{
 	functions,
 }
 
-type Env struct {
+type env struct {
 	unknowns *UnknownList
 	methods  *MethodList
 	customs  *CustomList
-	structs  *StructureList
+	structs  *StructList
 	imports  *ImportList
-	consts   *ConstantList
-	ifaces   *InterfaceList
-	packs    *PackageList
-	funcs    *FunctionList
-	vars     *VariableList
+	consts   *ConstList
+	ifaces   *IfaceList
+	packs    *PackList
+	funcs    *FuncList
+	vars     *VarList
 
-	Collection c.Collection
-	fields     []string
+	fields []string
 
 	logs     bool
 	count    int
 	filename string
+}
+
+type Env struct {
+	*env
+	Collection c.Collection
 }
 
 func New(collection c.Collection, logs bool) *Env {
@@ -63,26 +67,30 @@ func New(collection c.Collection, logs bool) *Env {
 	collection.ChangeQualifier("TemplateEnvironment")
 
 	e := &Env{
-		unknowns:   &UnknownList{},
-		methods:    &MethodList{},
-		customs:    &CustomList{},
-		structs:    &StructureList{},
-		imports:    &ImportList{},
-		consts:     &ConstantList{},
-		ifaces:     &InterfaceList{},
-		packs:      &PackageList{},
-		funcs:      &FunctionList{},
-		vars:       &VariableList{},
+		env: &env{
+			unknowns: &UnknownList{},
+			methods:  &MethodList{},
+			customs:  &CustomList{},
+			structs:  &StructList{},
+			imports:  &ImportList{},
+			consts:   &ConstList{},
+			ifaces:   &IfaceList{},
+			packs:    &PackList{},
+			funcs:    &FuncList{},
+			vars:     &VarList{},
+
+			fields: fields,
+			logs:   logs,
+		},
+
 		Collection: collection,
-		fields:     fields,
-		logs:       logs,
 	}
-	e.collect()
+	e.env.collect(collection)
 
 	return e
 }
 
-func (e *Env) log(info string, args ...interface{}) {
+func (e *env) log(info string, args ...interface{}) {
 	if !e.logs {
 		return
 	}
@@ -90,7 +98,7 @@ func (e *Env) log(info string, args ...interface{}) {
 	fmt.Printf("\t\t\t%d.[TempEnv] %v.\n", e.count, fmt.Sprintf(info, args...))
 }
 func (e *Env) StartFile(filename string) string {
-	e.filename = filename
+	e.env.filename = filename
 	return fmt.Sprintf("%v%v\n", FileStart, filename)
 }
 func (e *Env) EndFile() string { return fmt.Sprintf("%v%v\n", FileEnd, e.filename) }
@@ -121,7 +129,7 @@ func (e *Env) Unknowns(f ...Filter) *UnknownList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, unknown := range *e.unknowns {
+				for _, unknown := range *e.env.unknowns {
 					if children, _ := e.Collection.SearchChildren(&unknown, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -133,7 +141,7 @@ func (e *Env) Unknowns(f ...Filter) *UnknownList {
 				continue
 
 			case ParentFilter:
-				for _, unknown := range *e.unknowns {
+				for _, unknown := range *e.env.unknowns {
 					if children, _ := e.Collection.SearchParents(&unknown, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -165,7 +173,7 @@ func (e *Env) Methods(f ...Filter) *MethodList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, method := range *e.methods {
+				for _, method := range *e.env.methods {
 					if children, _ := e.Collection.SearchChildren(&method, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -177,7 +185,7 @@ func (e *Env) Methods(f ...Filter) *MethodList {
 				continue
 
 			case ParentFilter:
-				for _, method := range *e.methods {
+				for _, method := range *e.env.methods {
 					if children, _ := e.Collection.SearchParents(&method, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -209,7 +217,7 @@ func (e *Env) Customs(f ...Filter) *CustomList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, custom := range *e.customs {
+				for _, custom := range *e.env.customs {
 					if children, _ := e.Collection.SearchChildren(&custom, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -221,7 +229,7 @@ func (e *Env) Customs(f ...Filter) *CustomList {
 				continue
 
 			case ParentFilter:
-				for _, custom := range *e.customs {
+				for _, custom := range *e.env.customs {
 					if children, _ := e.Collection.SearchParents(&custom, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -239,21 +247,20 @@ func (e *Env) Customs(f ...Filter) *CustomList {
 	}
 	return list
 }
-func (e *Env) Structs(f ...Filter) *StructureList {
+func (e *Env) Structs(f ...Filter) *StructList {
 	if len(f) == 0 {
 		return e.structs
 	}
 
-	var list = &StructureList{}
+	var list = &StructList{}
 
 	for _, filter := range f {
 		for _, val := range filter.v {
 			selector, value := parseValue(val.(string))
-
 			switch filter.k {
 
 			case ChildFilter:
-				for _, structure := range *e.structs {
+				for _, structure := range *e.env.structs {
 					if children, _ := e.Collection.SearchChildren(&structure, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -265,7 +272,7 @@ func (e *Env) Structs(f ...Filter) *StructureList {
 				continue
 
 			case ParentFilter:
-				for _, structure := range *e.structs {
+				for _, structure := range *e.env.structs {
 					if children, _ := e.Collection.SearchParents(&structure, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -281,6 +288,7 @@ func (e *Env) Structs(f ...Filter) *StructureList {
 			}
 		}
 	}
+
 	return list
 }
 func (e *Env) Imports(f ...Filter) *ImportList {
@@ -297,7 +305,7 @@ func (e *Env) Imports(f ...Filter) *ImportList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, imp := range *e.imports {
+				for _, imp := range *e.env.imports {
 					if children, _ := e.Collection.SearchChildren(&imp, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -309,7 +317,7 @@ func (e *Env) Imports(f ...Filter) *ImportList {
 				continue
 
 			case ParentFilter:
-				for _, imp := range *e.imports {
+				for _, imp := range *e.env.imports {
 					if children, _ := e.Collection.SearchParents(&imp, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -327,12 +335,12 @@ func (e *Env) Imports(f ...Filter) *ImportList {
 	}
 	return list
 }
-func (e *Env) Consts(f ...Filter) *ConstantList {
+func (e *Env) Consts(f ...Filter) *ConstList {
 	if len(f) == 0 {
 		return e.consts
 	}
 
-	var list = &ConstantList{}
+	var list = &ConstList{}
 
 	for _, filter := range f {
 		for _, val := range filter.v {
@@ -341,7 +349,7 @@ func (e *Env) Consts(f ...Filter) *ConstantList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, constant := range *e.consts {
+				for _, constant := range *e.env.consts {
 					if children, _ := e.Collection.SearchChildren(&constant, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -353,7 +361,7 @@ func (e *Env) Consts(f ...Filter) *ConstantList {
 				continue
 
 			case ParentFilter:
-				for _, constant := range *e.consts {
+				for _, constant := range *e.env.consts {
 					if children, _ := e.Collection.SearchParents(&constant, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -371,12 +379,12 @@ func (e *Env) Consts(f ...Filter) *ConstantList {
 	}
 	return list
 }
-func (e *Env) Ifaces(f ...Filter) *InterfaceList {
+func (e *Env) Ifaces(f ...Filter) *IfaceList {
 	if len(f) == 0 {
 		return e.ifaces
 	}
 
-	var list = &InterfaceList{}
+	var list = &IfaceList{}
 
 	for _, filter := range f {
 		for _, val := range filter.v {
@@ -385,7 +393,7 @@ func (e *Env) Ifaces(f ...Filter) *InterfaceList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, iface := range *e.ifaces {
+				for _, iface := range *e.env.ifaces {
 					if children, _ := e.Collection.SearchChildren(&iface, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -397,7 +405,7 @@ func (e *Env) Ifaces(f ...Filter) *InterfaceList {
 				continue
 
 			case ParentFilter:
-				for _, iface := range *e.ifaces {
+				for _, iface := range *e.env.ifaces {
 					if children, _ := e.Collection.SearchParents(&iface, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -415,12 +423,12 @@ func (e *Env) Ifaces(f ...Filter) *InterfaceList {
 	}
 	return list
 }
-func (e *Env) Packs(f ...Filter) *PackageList {
+func (e *Env) Packs(f ...Filter) *PackList {
 	if len(f) == 0 {
 		return e.packs
 	}
 
-	var list = &PackageList{}
+	var list = &PackList{}
 
 	for _, filter := range f {
 		for _, val := range filter.v {
@@ -429,7 +437,7 @@ func (e *Env) Packs(f ...Filter) *PackageList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, pack := range *e.packs {
+				for _, pack := range *e.env.packs {
 					if children, _ := e.Collection.SearchChildren(&pack, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -441,7 +449,7 @@ func (e *Env) Packs(f ...Filter) *PackageList {
 				continue
 
 			case ParentFilter:
-				for _, pack := range *e.packs {
+				for _, pack := range *e.env.packs {
 					if children, _ := e.Collection.SearchParents(&pack, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -459,12 +467,12 @@ func (e *Env) Packs(f ...Filter) *PackageList {
 	}
 	return list
 }
-func (e *Env) Funcs(f ...Filter) *FunctionList {
+func (e *Env) Funcs(f ...Filter) *FuncList {
 	if len(f) == 0 {
 		return e.funcs
 	}
 
-	var list = &FunctionList{}
+	var list = &FuncList{}
 
 	for _, filter := range f {
 		for _, val := range filter.v {
@@ -473,7 +481,7 @@ func (e *Env) Funcs(f ...Filter) *FunctionList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, function := range *e.funcs {
+				for _, function := range *e.env.funcs {
 					if children, _ := e.Collection.SearchChildren(&function, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -485,7 +493,7 @@ func (e *Env) Funcs(f ...Filter) *FunctionList {
 				continue
 
 			case ParentFilter:
-				for _, function := range *e.funcs {
+				for _, function := range *e.env.funcs {
 					if children, _ := e.Collection.SearchParents(&function, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -503,12 +511,12 @@ func (e *Env) Funcs(f ...Filter) *FunctionList {
 	}
 	return list
 }
-func (e *Env) Vars(f ...Filter) *VariableList {
+func (e *Env) Vars(f ...Filter) *VarList {
 	if len(f) == 0 {
 		return e.vars
 	}
 
-	var list = &VariableList{}
+	var list = &VarList{}
 
 	for _, filter := range f {
 		for _, val := range filter.v {
@@ -517,7 +525,7 @@ func (e *Env) Vars(f ...Filter) *VariableList {
 			switch filter.k {
 
 			case ChildFilter:
-				for _, variable := range *e.vars {
+				for _, variable := range *e.env.vars {
 					if children, _ := e.Collection.SearchChildren(&variable, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {
@@ -529,7 +537,7 @@ func (e *Env) Vars(f ...Filter) *VariableList {
 				continue
 
 			case ParentFilter:
-				for _, variable := range *e.vars {
+				for _, variable := range *e.env.vars {
 					if children, _ := e.Collection.SearchParents(&variable, selector); children != nil {
 						for _, child := range children {
 							if child.GetName() == value {

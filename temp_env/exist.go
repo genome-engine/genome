@@ -2,7 +2,7 @@ package temp_env
 
 import "github.com/genome-engine/genome/engine/units"
 
-func (e *Env) exist(name string, unit units.Unit) bool {
+func (e *env) exist(name string, unit units.Unit) bool {
 	switch name {
 	case packages:
 		for _, field := range *e.packs {

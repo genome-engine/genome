@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"regexp"
+	"path/filepath"
 	"strings"
 	t "text/template"
 )
@@ -50,19 +50,22 @@ func (s *Script) execParse() error {
 	s.log("Parsing running")
 	collection := c.New("Script", s.Logs)
 
-	config := p.Config{
-		Collection: *collection,
-		Path:       s.Parse,
+	for _, prs := range s.Parses {
+		config := p.Config{
+			Collection: *collection,
+			Path:       prs.Path,
+		}
+
+		err := p.New(config, s.Logs).Parse()
+		if err != nil {
+			s.log("Error from parsing.Exit with error.")
+			return err
+		}
+
+		s.log("Parsing complete.Collection received.")
 	}
 
-	err := p.New(config, s.Logs).Parse()
-	if err != nil {
-		s.log("Error from parsing.Exit with error.")
-		return err
-	}
-
-	s.log("Parsing complete.Collection received.")
-	s.result.parse = *collection
+	s.result.collection = *collection
 
 	return nil
 }
@@ -70,22 +73,38 @@ func (s *Script) execParse() error {
 func (s *Script) execTemp() error {
 	s.log("Templating run.")
 
-	var w = &strings.Builder{}
+	var (
+		w      = &strings.Builder{}
+		source = &strings.Builder{}
+	)
 
-	src, err := ioutil.ReadFile(s.Template)
-	if err != nil {
-		s.log("Error from file reading.Exit with error.")
-		return err
+	if s.GlobTemps && os.Getenv("GENOME_TEMPS") != "" {
+		s.log("The use of global templates is activated.")
+		if err := filepath.Walk(os.Getenv("GENOME_TEMPS"), walkFunc(source, s.Delimiter)); err != nil {
+			return err
+		}
+	}
+
+	s.log("Template bonding.")
+	for _, template := range s.Templates {
+		src, err := ioutil.ReadFile(template.Path)
+		if err != nil {
+			s.log("Error from file reading.Exit with error.")
+			return err
+		}
+		source.WriteString("\n")
+		source.Write(src)
 	}
 
 	s.log("Initializing template for execution.")
-	temp, err := t.New("").Delims(s.Delimiter.Delimiters()).Funcs(funcs.Funcs).Parse(string(src))
+	temp, err := t.New("").Delims(s.Delimiters()).Funcs(funcs.Funcs()).Parse(source.String())
 	if err != nil {
 		s.log("Error from template parsing.Exit with error.")
 		return err
 	}
+
 	s.log("Executing template.")
-	env := temp_env.New(s.parse, s.Logs)
+	env := temp_env.New(s.collection, s.Logs)
 	if err := temp.Execute(w, env); err != nil {
 		s.log("Error from template execution. Exit with error.")
 		return err
@@ -133,104 +152,6 @@ func (s *Script) execGen() error {
 	if err != nil {
 		s.log("Error from generating.Exit with error.")
 		return err
-	}
-	return nil
-}
-
-func (s *Script) isMultiFileSource() bool {
-	return regexp.MustCompile(fmt.Sprintf("(%v|%v)[\\w+/\\.]+", temp_env.FileStart, temp_env.FileEnd)).MatchString(s.temp)
-}
-
-func (s *Script) splitSource() map[string]string {
-	var (
-		exp = func(s string) *regexp.Regexp { return regexp.MustCompile(fmt.Sprintf("%v[\\w+/\\.]+", s)) }
-
-		start = exp(temp_env.FileStart) //#file-start: filename.extension | if not extension -> extension = .go
-		end   = exp(temp_env.FileEnd)   //#file-end: filename.extension
-
-		startIdx = start.FindAllStringIndex(s.temp, -1)
-		endIdx   = end.FindAllStringIndex(s.temp, -1)
-
-		startBuffer = map[string]int{}    //filename -> end index
-		dataBuffer  = map[string]string{} //filename -> source
-
-		sourceResidue strings.Builder
-		min, max      int
-		zeroWas       bool
-	)
-
-	for _, idx := range startIdx {
-		if len(idx) == 0 {
-			continue
-		}
-
-		if min == 0 && !zeroWas {
-			min = idx[0]
-		}
-
-		if min > idx[0] {
-			min = idx[0]
-		}
-
-		filename := strings.Split(s.temp[idx[0]-1:idx[1]], ":")[1]
-		startBuffer[filename] = idx[1]
-	}
-
-	for _, idx := range endIdx {
-		if len(idx) == 0 {
-			continue
-		}
-
-		if idx[1] > max {
-			max = idx[1]
-		}
-
-		filename := strings.Split(s.temp[idx[0]-1:idx[1]], ":")[1]
-		if index, ok := startBuffer[filename]; ok {
-			dataBuffer[filename] = s.temp[index:idx[0]]
-		}
-	}
-
-	sourceResidue.WriteString(s.temp[:min])
-	sourceResidue.WriteString(s.temp[max:])
-	s.temp = sourceResidue.String()
-
-	return dataBuffer
-}
-
-func (s *Script) getDirsPath() string {
-	var lastIndex int
-	var delim = s.getDelim(s.Generate.Path)
-
-	if strings.Contains(s.Generate.Path, delim) {
-		dirs := strings.Split(s.Generate.Path, delim)
-		lastIndex = len(dirs) - 1
-
-		return strings.Join(dirs[:lastIndex], delim)
-	}
-
-	return s.Generate.Path
-}
-
-func (s *Script) getDelim(fullPath string) string {
-	if strings.Contains(fullPath, "/") {
-		return "/"
-	}
-	return "\\"
-}
-
-func (s *Script) createDirs(filename string) error {
-	var delim = s.getDelim(filename)
-	var dirsPath = s.getDirsPath()
-
-	if strings.Contains(filename, delim) {
-		elements := strings.Split(filename, delim)
-
-		for _, dir := range elements[:len(elements)-1] {
-			if err := os.Mkdir(path.Join(dirsPath, dir), os.ModePerm); err != nil && !os.IsExist(err) {
-				return err
-			}
-		}
 	}
 	return nil
 }

@@ -19,7 +19,7 @@ func (vis *GeneralVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			isMain = true
 		}
 
-		pack := units.NewPackage(packId, packName)
+		pack := units.NewPack(packId, packName)
 		pack.Main = isMain
 
 		vis.pack = pack
@@ -154,7 +154,7 @@ func (vis *StructsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 	switch structType := node.(type) {
 	case *ast.StructType:
 		var (
-			structUnit = &units.Structure{}
+			structUnit = &units.Struct{}
 			structName string
 			structId   int
 		)
@@ -201,6 +201,7 @@ func (vis *InterfacesVisitor) Visit(node ast.Node) (w ast.Visitor) {
 
 				s, e := methodType.Pos()-1, methodType.End()-1
 				methodUnit.Signature = methodName + vis.src[s:e]
+				methodUnit.Type = "func " + vis.src[s:e]
 
 				if methodType.Params != nil {
 					methodUnit.Parameters = getParams(methodType.Params.List, vis.src)
@@ -289,10 +290,11 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			}
 
 			signStart, signEnd = funcDecl.Name.Pos() - 1, funcDecl.Type.End() - 1
-			signature          = "func " + excludeName(vis.src[signStart:signEnd])
+			signature          = "func " + vis.src[signStart:signEnd]
+			typ                = "func " + excludeName(vis.src[signStart:signEnd])
 
-			params  []units.Parameter
-			returns []units.Parameter
+			params  []units.Param
+			returns []units.Param
 
 			bodyStart, bodyEnd = funcDecl.Body.Pos() - 1, funcDecl.Body.End() - 1
 			body               = vis.src[bodyStart:bodyEnd]
@@ -315,6 +317,7 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			funcUnit.Comment = comment
 			funcUnit.IsExported = exported(funcName)
 			funcUnit.Signature = signature
+			funcUnit.Type = typ
 			funcUnit.Returns = returns
 			funcUnit.Parameters = params
 			funcUnit.FuncBody = body
@@ -333,6 +336,7 @@ func (vis *FuncsVisitor) Visit(node ast.Node) (w ast.Visitor) {
 			funcUnit.Comment = comment
 			funcUnit.IsExported = exported(funcName)
 			funcUnit.Signature = signature
+			funcUnit.Type = typ
 			funcUnit.Returns = returns
 			funcUnit.Parameters = params
 			funcUnit.Body = body

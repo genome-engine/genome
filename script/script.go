@@ -10,24 +10,34 @@ import (
 
 type (
 	Script struct {
-		result
+		GlobTemps bool       `yaml:"glob_temps"`
+		Templates []Template `yaml:"templates"`
+		Parses    []Parse    `yaml:"parses"`
+		Logs      bool       `yaml:"logs"`
 		Delimiter `yaml:"delimiters"`
 		Generate  `yaml:"generate"`
-		Logs      bool   `yaml:"logs"`
-		Parse     string `yaml:"parse"`
-		Template  string `yaml:"template"`
-		count     int
+
+		count int
+		result
 	}
 
-	result struct {
-		parse c.Collection
-		temp  string
+	Parse struct {
+		Path string `yaml:"path"`
+	}
+
+	Template struct {
+		Path string `yaml:"path"`
 	}
 
 	Generate struct {
 		Path  string `yaml:"path"`
 		Mode  string `yaml:"mode"`
 		Label string `yaml:"label"`
+	}
+
+	result struct {
+		collection c.Collection
+		temp       string
 	}
 )
 

@@ -1,7 +1,7 @@
 package temp_env
 
-func (list *PackageList) Exclude(f ...Filter) *PackageList {
-	var newList PackageList
+func (list *PackList) Exclude(f ...Filter) *PackList {
+	var newList PackList
 
 	if len(f) == 0 {
 		return list
@@ -20,8 +20,8 @@ func (list *PackageList) Exclude(f ...Filter) *PackageList {
 
 	return &newList
 }
-func (list *ConstantList) Exclude(f ...Filter) *ConstantList {
-	var newList ConstantList
+func (list *ConstList) Exclude(f ...Filter) *ConstList {
+	var newList ConstList
 
 	if len(f) == 0 {
 		return list
@@ -40,8 +40,8 @@ func (list *ConstantList) Exclude(f ...Filter) *ConstantList {
 
 	return &newList
 }
-func (list *VariableList) Exclude(f ...Filter) *VariableList {
-	var newList VariableList
+func (list *VarList) Exclude(f ...Filter) *VarList {
+	var newList VarList
 
 	if len(f) == 0 {
 		return list
@@ -80,8 +80,8 @@ func (list *UnknownList) Exclude(f ...Filter) *UnknownList {
 
 	return &newList
 }
-func (list *StructureList) Exclude(f ...Filter) *StructureList {
-	var newList StructureList
+func (list *StructList) Exclude(f ...Filter) *StructList {
+	var newList StructList
 
 	if len(f) == 0 {
 		return list
@@ -100,8 +100,8 @@ func (list *StructureList) Exclude(f ...Filter) *StructureList {
 
 	return &newList
 }
-func (list *InterfaceList) Exclude(f ...Filter) *InterfaceList {
-	var newList InterfaceList
+func (list *IfaceList) Exclude(f ...Filter) *IfaceList {
+	var newList IfaceList
 
 	if len(f) == 0 {
 		return list
@@ -160,8 +160,8 @@ func (list *CustomList) Exclude(f ...Filter) *CustomList {
 
 	return &newList
 }
-func (list *FunctionList) Exclude(f ...Filter) *FunctionList {
-	var newList FunctionList
+func (list *FuncList) Exclude(f ...Filter) *FuncList {
+	var newList FuncList
 
 	if len(f) == 0 {
 		return list

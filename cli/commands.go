@@ -23,12 +23,12 @@ const (
 	|    Available commands:    |
 	+---------------------------+
 		
-		+---+
-		|run|		script_path.yaml(can be unsuffixed) 
-		+---+
+	+---+
+	|run|		script_path.yaml(can be unsuffixed) 
+	+---+
 	+-----------+
 	|get-script |	creates a script file.
-	| 	/ gs 	|
+	| / gs      |
 	+-----------+
 `
 )
@@ -67,21 +67,29 @@ var (
 		Aliases: []string{"gs"},
 		Run: func(cmd *cobra.Command, args []string) {
 			var filename string
-			var source = `parse: path_to_analyze
-template: path_to_template
+			var source = `parses:
+ - path: analyze_path
+
+ #If you want to use global templates and the global variable [GENOME_TEMPS] 
+ #is declared, unlock the glob_temps flag.
+#glob_temps:true
+templates: 
+ - path: template_path
+
 generate:
-	path: path_to_out
+ path: path_to_out
 
-	#insert mode is used to add new text to a file with existing text.
-	#mode: insert 
-	
-	#add a mark to the file (if mode: insert) #genome-insert:label_name; #genome-insert-end
-	#label: label_name
+  #insert mode is used to add new text to a file with existing text.
+ #mode: insert 
 
-#delomiters: 0 - {{}}, 1 - <>
+  #add a mark to the file (if mode: insert) 
+  #insert:label_name; #insert-end:label_name
+ #label: label_name
+
+ #delimiters: 0 - {{}}, 1 - <>
 #delimiters: 1 
 
-#if you want to see the generation process displayed in the console.
+ #if you want to see the generation process displayed in the console.
 #logs: true
 `
 

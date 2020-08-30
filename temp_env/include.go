@@ -1,7 +1,7 @@
 package temp_env
 
-func (list *ConstantList) Include(f ...Filter) *ConstantList {
-	var newList ConstantList
+func (list *ConstList) Include(f ...Filter) *ConstList {
+	var newList ConstList
 
 	if len(f) == 0 {
 		return list
@@ -19,8 +19,8 @@ func (list *ConstantList) Include(f ...Filter) *ConstantList {
 
 	return &newList
 }
-func (list *PackageList) Include(f ...Filter) *PackageList {
-	var newList PackageList
+func (list *PackList) Include(f ...Filter) *PackList {
+	var newList PackList
 
 	if len(f) == 0 {
 		return list
@@ -57,8 +57,8 @@ func (list *CustomList) Include(f ...Filter) *CustomList {
 
 	return &newList
 }
-func (list *StructureList) Include(f ...Filter) *StructureList {
-	var newList StructureList
+func (list *StructList) Include(f ...Filter) *StructList {
+	var newList StructList
 
 	if len(f) == 0 {
 		return list
@@ -76,8 +76,8 @@ func (list *StructureList) Include(f ...Filter) *StructureList {
 
 	return &newList
 }
-func (list *InterfaceList) Include(f ...Filter) *InterfaceList {
-	var newList InterfaceList
+func (list *IfaceList) Include(f ...Filter) *IfaceList {
+	var newList IfaceList
 
 	if len(f) == 0 {
 		return list
@@ -114,8 +114,8 @@ func (list *UnknownList) Include(f ...Filter) *UnknownList {
 
 	return &newList
 }
-func (list *VariableList) Include(f ...Filter) *VariableList {
-	var newList VariableList
+func (list *VarList) Include(f ...Filter) *VarList {
+	var newList VarList
 
 	if len(f) == 0 {
 		return list
@@ -152,8 +152,8 @@ func (list *MethodList) Include(f ...Filter) *MethodList {
 
 	return &newList
 }
-func (list *FunctionList) Include(f ...Filter) *FunctionList {
-	var newList FunctionList
+func (list *FuncList) Include(f ...Filter) *FuncList {
+	var newList FuncList
 
 	if len(f) == 0 {
 		return list

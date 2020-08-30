@@ -126,9 +126,9 @@ func (vis *StructsVisitor) getFields(fields *ast.FieldList, structure units.Unit
 	return structFields
 }
 
-func getParams(fields []*ast.Field, src string) []units.Parameter {
-	var list []units.Parameter
-	var parameter units.Parameter
+func getParams(fields []*ast.Field, src string) []units.Param {
+	var list []units.Param
+	var parameter units.Param
 
 	for _, result := range fields {
 		s, e := result.Type.Pos()-1, result.Type.End()-1
@@ -230,7 +230,7 @@ func (vis *GeneralVisitor) constHandle(n *ast.GenDecl) {
 			enumType  string
 
 			enums []units.Unit
-			enum  *units.Constant
+			enum  *units.Const
 		)
 
 		for _, spec := range n.Specs {

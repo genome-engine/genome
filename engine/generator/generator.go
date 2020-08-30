@@ -24,8 +24,8 @@ func (l *InsertionLabel) log(info string, args ...interface{}) {
 	fmt.Printf("\t\t\t%d %v.\n", l.count, fmt.Sprintf(info, args...))
 }
 
-const InsertPrefix = "#genome-insert:"
-const EndInsertPrefix = "#genome-insert-end"
+const InsertPrefix = "#insert:"
+const EndInsertPrefix = "#insert-end:"
 
 type (
 	Mode int
@@ -165,7 +165,7 @@ func (l *InsertionLabel) fillBuffer(originalSource string) error {
 			l.insertionBuffer.begin = b.String()
 			b.Reset()
 			continue
-		case strings.Contains(line, EndInsertPrefix):
+		case strings.Contains(line, EndInsertPrefix+l.LabelName):
 			l.log("%v was found", EndInsertPrefix)
 			if !found {
 				l.log("Label %v not was found", InsertPrefix+l.LabelName)
@@ -184,6 +184,10 @@ func (l *InsertionLabel) fillBuffer(originalSource string) error {
 }
 
 func (i *GenerationInfo) formatting() {
+	if !strings.HasSuffix(i.Path, ".go") {
+		return
+	}
+
 	i.log("Executing go fmt %v", i.Path)
 	err := exec.Command("go", "fmt", i.Path).Run()
 	if err != nil {

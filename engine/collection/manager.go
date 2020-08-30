@@ -123,7 +123,7 @@ func (c *Collection) findImplements() {
 	c.log("Searching implements.")
 	var implementsCount int
 	var ifaceMethods = map[int][]units.Unit{}
-	var ownersMetods = map[int][]units.Unit{}
+	var ownersMethods = map[int][]units.Unit{}
 
 	for _, unit := range c.rootTable {
 		switch unit.GetSelector() {
@@ -136,14 +136,14 @@ func (c *Collection) findImplements() {
 		case units.GoStruct, units.GoCustom:
 			for _, method := range c.childrenTable[unit.GetId()] {
 				if method.GetSelector() == units.GoMethod {
-					ownersMetods[unit.GetId()] = append(ownersMetods[unit.GetId()], method)
+					ownersMethods[unit.GetId()] = append(ownersMethods[unit.GetId()], method)
 				}
 			}
 		}
 	}
 
 	for ifaceId, iMethods := range ifaceMethods {
-		for ownerId, oMethods := range ownersMetods {
+		for ownerId, oMethods := range ownersMethods {
 			if compareMethods(iMethods, oMethods) {
 				implementsCount++
 				owner := c.rootTable[ownerId]
@@ -160,7 +160,7 @@ func (c *Collection) Linking() {
 	for _, unit := range c.rootTable {
 		switch unit.GetSelector() {
 		case units.GoConst:
-			con := unit.(*units.Constant)
+			con := unit.(*units.Const)
 			if con.Enum && con.Type != "int" {
 				for _, custom := range c.rootTable {
 					if custom.GetSelector() == units.GoCustom && strings.Contains(con.Type, custom.GetName()) {

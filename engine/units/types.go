@@ -1,69 +1,92 @@
 package units
 
 type (
-	Package struct {
+	//The Unit interface is used to universalize elements of the collection.
+	//This data will then have to go through type conversion to basic structures.
+	Unit interface {
+		GetId() int
+		GetName() string
+		GetSelector() Selector
+	}
+
+	//The Selector is created for identification of an accessory of default_template object
+	//and also for creation of possible variants of nesting of selectors in each other.
+	//More details about selectors and units are written in ./units/README.md,
+	//i.e. in the basic implementation of units and selectors.
+	Selector interface {
+		Name() string
+		CanContain(selector Selector) bool
+		ChildSelectors() []Selector
+		ParentSelectors() []Selector
+	}
+)
+
+type (
+	Pack struct {
 		Selector   Selector
 		Comment    string
-		IsExported bool
 		Name       string
-		ID         int
-		Main       bool
 		Path       string
+		IsExported bool
+		Main       bool
+		ID         int
 	}
 	Import struct {
 		Selector   Selector
 		Comment    string
-		IsExported bool
 		Name       string
-		ID         int
 		Value      string
+		IsExported bool
+		ID         int
 	}
-	Structure struct {
+	Struct struct {
 		Selector   Selector
 		Comment    string
-		IsExported bool
 		Name       string
+		IsExported bool
 		ID         int
 		Fields     []StructField
 	}
-	Interface struct {
+	Iface struct {
 		Selector      Selector
 		Comment       string
-		IsExported    bool
 		Name          string
-		ID            int
+		IsExported    bool
 		IsStructField bool
+		ID            int
 	}
 	Custom struct {
 		Selector   Selector
 		Comment    string
-		IsExported bool
 		Name       string
-		ID         int
 		Type       string
+		IsExported bool
+		ID         int
 	}
 	Method struct {
 		Selector            Selector
 		Comment             string
-		IsExported          bool
 		Name                string
-		ID                  int
-		InInterfaceDecl     bool
 		Signature           string
-		Parameters, Returns []Parameter
 		Body                string
+		Type                string
+		IsExported          bool
+		InInterfaceDecl     bool
+		ID                  int
+		Parameters, Returns []Param
 	}
-	Function struct {
+	Func struct {
 		Selector            Selector
 		Comment             string
-		IsExported          bool
 		Name                string
-		ID                  int
 		Signature           string
-		Parameters, Returns []Parameter
+		Type                string
 		FuncBody            string
+		IsExported          bool
+		ID                  int
+		Parameters, Returns []Param
 	}
-	Constant struct {
+	Const struct {
 		Selector   Selector
 		Comment    string
 		Name       string
@@ -72,31 +95,31 @@ type (
 		Enum       bool
 		ID         int
 	}
-	Variable struct {
+	Var struct {
 		Selector   Selector
-		IsExported bool
 		Comment    string
 		Name       string
 		Type       string
+		IsExported bool
 		ID         int
 	}
 	Unknown struct {
 		Selector   Selector
 		Comment    string
-		IsExported bool
 		Name       string
-		ID         int
 		Type       string
+		IsExported bool
+		ID         int
 	}
 
 	StructField struct {
 		Comment    string
 		Tag        string
-		IsExported bool
 		Name       string
 		Type       string
+		IsExported bool
 	}
-	Parameter struct {
+	Param struct {
 		Name string
 		Type string
 	}
